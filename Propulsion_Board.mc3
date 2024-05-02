@@ -1,4 +1,4 @@
-<config configName="default" projectName="Propulsion_Board" configVersion="1.1" device="PIC18F26K83" deviceLibraryClass="com.microchip.mcc.melody.Library" coreVersion="5.7.0">
+<config configName="default" projectName="Propulsion_Board" configVersion="1.1" device="PIC18F26K83" deviceLibraryClass="com.microchip.mcc.melody.Library" coreVersion="5.7.1">
    <usedPackages class="java.util.ArrayList">
       <package packageName="@mchp-mcc/main-manager" version="3.1.1" contentType="MELODY">
          <modules class="java.util.ArrayList"/>
