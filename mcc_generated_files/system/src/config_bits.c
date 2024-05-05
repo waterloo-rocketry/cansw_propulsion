@@ -36,7 +36,7 @@
 // Configuration bits: selected in the GUI
 
 //CONFIG1L
-#pragma config FEXTOSC = ECH     // External Oscillator Selection->EC (external clock) above 8 MHz; PFM set to high power
+#pragma config FEXTOSC = HS     // External Oscillator Selection->HS (crystal oscillator) above 8 MHz; PFM set to high power
 #pragma config RSTOSC = HFINTOSC_64MHZ     // Reset Oscillator Selection->HFINTOSC with HFFRQ = 64 MHz and CDIV = 1:1
 
 //CONFIG1H

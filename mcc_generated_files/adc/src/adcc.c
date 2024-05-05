@@ -61,8 +61,8 @@ void ADCC_Initialize(void)
     ADACCU = 0x0;
     //ADRPT 0; 
     ADRPT = 0x0;
-    //ADCHS ANA0; 
-    ADPCH = 0x0;
+    //ADCHS ANB0; 
+    ADPCH = 0x8;
     //ADACQL 1; 
     ADACQL = 0x1;
     //ADACQH 0; 
@@ -81,12 +81,12 @@ void ADCC_Initialize(void)
     ADCON3 = 0x0;
     //ADMATH registers not updated; 
     ADSTAT = 0x0;
-    //ADNREF VSS; ADPREF VDD; 
-    ADREF = 0x0;
+    //ADNREF VSS; ADPREF FVR; 
+    ADREF = 0x3;
     //ADACT disabled; 
     ADACT = 0x0;
-    //ADCCS FOSC/2; 
-    ADCLK = 0x0;
+    //ADCCS FOSC/16; 
+    ADCLK = 0x7;
     //GO_nDONE undefined; ADFM right; ADON enabled; ADCS FOSC; ADCONT disabled; 
     ADCON0 = 0x84;
     

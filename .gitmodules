@@ -1,3 +1,6 @@
 [submodule "canlib"]
 	path = canlib
 	url = https://github.com/waterloo-rocketry/canlib.git
+[submodule "rocketlib"]
+	path = rocketlib
+	url = https://github.com/waterloo-rocketry/rocketlib.git

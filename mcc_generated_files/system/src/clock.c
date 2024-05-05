@@ -37,8 +37,8 @@
 void CLOCK_Initialize(void)
 {
     // Set the CLOCK CONTROL module to the options selected in the user interface.
-    //NDIV 4; NOSC HFINTOSC; 
-    OSCCON1 = 0x62;
+    //NDIV 1; NOSC EXTOSC; 
+    OSCCON1 = 0x70;
     //SOSCPWR Low power; CSWHOLD may proceed; 
     OSCCON3 = 0x0;
     //EXTOEN disabled; HFOEN disabled; MFOEN disabled; LFOEN disabled; SOSCEN disabled; ADOEN disabled; 
