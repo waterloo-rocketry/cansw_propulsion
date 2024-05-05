@@ -6,8 +6,8 @@
 #include "mcc_generated_files/system/system.h"
 
 #include "error_checks.h"
-#include "sensor_general.h"
 #include "i2c.h"
+#include "sensor_general.h"
 
 #include <xc.h>
 
@@ -26,6 +26,8 @@ volatile bool seen_can_message = false;
 
 // memory pool for the CAN tx buffer
 uint8_t tx_pool[200];
+
+#define IOEXP_I2C_ADDR 0x41
 
 int main(int argc, char **argv) {
     // MCC generated initializer
@@ -66,6 +68,11 @@ int main(int argc, char **argv) {
     uint32_t last_pres_pneumatics_millis = millis();
     uint32_t last_pres_low_millis = millis();
     uint32_t last_temp_millis = millis();
+
+    // Test the IO Expander
+    i2c_write_reg8(IOEXP_I2C_ADDR, 3, 0);
+    i2c_write_reg8(IOEXP_I2C_ADDR, 1, 0b101);
+
     while (1) {
         CLRWDT(); // feed the watchdog, which is set for 256ms
 

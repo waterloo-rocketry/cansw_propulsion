@@ -20,3 +20,6 @@ funclist
 nbproject/Makefile-*
 disassembly/
 *.map
+.DS_Store
+mcc-manifest-autosave.yml
+mcc-manifest-generated-success.yml
