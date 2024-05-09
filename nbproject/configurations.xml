@@ -23,6 +23,8 @@
       </logicalFolder>
       <itemPath>error_checks.h</itemPath>
       <itemPath>sensor_general.h</itemPath>
+      <itemPath>../cansw_actuator/actuator.h</itemPath>
+      <itemPath>../cansw_actuator/board.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -74,11 +76,14 @@
       <itemPath>main.c</itemPath>
       <itemPath>error_checks.c</itemPath>
       <itemPath>sensor_general.c</itemPath>
+      <itemPath>../cansw_actuator/actuator.c</itemPath>
+      <itemPath>../cansw_actuator/board.c</itemPath>
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
     <Elem>canlib</Elem>
     <Elem>rocketlib/pic18f26k83</Elem>
+    <Elem>../cansw_actuator</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>

@@ -11,6 +11,7 @@
             <sourceRootList>
                 <sourceRootElem>canlib</sourceRootElem>
                 <sourceRootElem>rocketlib/pic18f26k83</sourceRootElem>
+                <sourceRootElem>../cansw_actuator</sourceRootElem>
             </sourceRootList>
             <confList>
                 <confElem>
