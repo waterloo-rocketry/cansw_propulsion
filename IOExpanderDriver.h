@@ -8,16 +8,7 @@
 #ifndef IOEXPANDERDRIVER_H
 #define	IOEXPANDERDRIVER_H
 
-#ifdef	__cplusplus
-extern "C" {
-#endif
-
-
-
-
-#ifdef	__cplusplus
-}
-#endif
+void set_output();
 
 #endif	/* IOEXPANDERDRIVER_H */
 
