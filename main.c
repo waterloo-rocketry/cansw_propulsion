@@ -11,6 +11,7 @@
 #include "i2c.h"
 #include "sensor_general.h"
 #include "actuator.h"
+#include "IOExpanderDriver.h"
 
 #include <xc.h>
 
