@@ -2,17 +2,14 @@
 #include <stdint.h>
 #include <stdbool.h>
 
-#include "canlib/can.h"
-#include "canlib/can_common.h"
-#include "canlib/pic18f26k83/pic18f26k83_can.h"
-#include "canlib/message_types.h"
-#include "canlib/util/can_tx_buffer.h"
-
-#include "mcc_generated_files/mcc.h"
+#include "canlib/canlib.h"
 
 #include "actuator.h"
-#include "board.h"
-#include "timer.h"
+
+// FIXME
+
+#define RELAY_OFF()
+#define RELAY_ON()
 
 void actuator_init(){
     TRISB5 = 0; // set ACTUATOR_CONTROL (pin 26) as output
@@ -42,11 +39,11 @@ void actuator_init(){
 
 void actuator_set(enum ACTUATOR_STATE state) {
     if (state == ACTUATOR_OFF) {
-        WHITE_LED_OFF();
-        RELAY_OFF();
+        //WHITE_LED_OFF();
+        //RELAY_OFF();
     } else if (state == ACTUATOR_ON) {
-        WHITE_LED_ON();
-        RELAY_ON();
+        //WHITE_LED_ON();
+        //RELAY_ON();
     }
 }
 
@@ -89,6 +86,6 @@ void actuator_send_status(enum ACTUATOR_STATE req_state) {
     enum ACTUATOR_STATE curr_state = get_actuator_state();
 
     can_msg_t stat_msg;
-    build_actuator_stat_msg(millis(), ACTUATOR_ID, curr_state, req_state, &stat_msg);
+    build_actuator_stat_msg(0, ACTUATOR_ID, curr_state, req_state, &stat_msg);
     txb_enqueue(&stat_msg);
 }

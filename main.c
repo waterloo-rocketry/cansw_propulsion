@@ -11,7 +11,6 @@
 #include "i2c.h"
 #include "sensor_general.h"
 #include "actuator.h"
-#include "board.h"
 
 #include <xc.h>
 
@@ -41,12 +40,7 @@ uint8_t tx_pool[200];
 int main(int argc, char **argv) {
     // MCC generated initializer
     SYSTEM_Initialize();
-    OSCILLATOR_Initialize();
-
-    FVR_Initialize();
-    ADCC_Initialize();
-    ADCC_DisableContinuousConversion();
-    
+	
     LED_init();
 
     // init our millisecond function

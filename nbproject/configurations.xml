@@ -76,14 +76,12 @@
       <itemPath>main.c</itemPath>
       <itemPath>error_checks.c</itemPath>
       <itemPath>sensor_general.c</itemPath>
-      <itemPath>../cansw_actuator/actuator.c</itemPath>
-      <itemPath>../cansw_actuator/board.c</itemPath>
     </logicalFolder>
+    <itemPath>actuator.c</itemPath>
   </logicalFolder>
   <sourceRootList>
     <Elem>canlib</Elem>
     <Elem>rocketlib/pic18f26k83</Elem>
-    <Elem>../cansw_actuator</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
@@ -1260,6 +1258,8 @@
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="0-ffff"/>
+        <property key="programmerToGoFilePath"
+                  value="/home/jason/rocketry/cansw_propulsion/debug/default/default_ptg"/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.pgmentry.voltage" value="low"/>

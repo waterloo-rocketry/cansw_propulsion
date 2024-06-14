@@ -5,7 +5,7 @@
 #include "mcc_generated_files/system/system.h"
 
 #include "error_checks.h"
-#include "board.h"
+//#include "board.h"
 #include "actuator.h"
 
 //******************************************************************************
@@ -15,7 +15,8 @@
 static bool battery_voltage_critical = false;
 
 bool check_battery_voltage_error(void){    //returns mV
-    adc_result_t batt_raw = ADCC_GetSingleConversion(channel_VBAT);
+    //adc_result_t batt_raw = ADCC_GetSingleConversion(channel_VBAT);
+    adc_result_t batt_raw =0;
 
     // Vref: 4.096V, Resolution: 12 bits -> raw ADC value is precisely in mV
     uint16_t batt_voltage_mV = (uint16_t)batt_raw;
