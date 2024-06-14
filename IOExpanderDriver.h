@@ -8,7 +8,8 @@
 #ifndef IOEXPANDERDRIVER_H
 #define	IOEXPANDERDRIVER_H
 
-void set_output();
+void pca_init();
+void set_output(uint8_t states);
 
 #endif	/* IOEXPANDERDRIVER_H */
 
