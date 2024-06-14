@@ -22,6 +22,10 @@
 #define PRES_OX_CC_TIME_DIFF_ms 500 // 2 Hz
 #define PRES_PNEUMATICS_TIME_DIFF_ms 500 // 2 Hz
 #define TEMP_TIME_DIFF_ms 0 // Disabled
+#define MAX_LOOP_TIME_DIFF_ms 20
+#define MAX_CAN_IDLE_TIME_MS 1000
+
+#define SAFE_STATE_ENABLED 1
 
 static void can_msg_handler(const can_msg_t *msg);
 static void send_status_ok(void);
@@ -144,10 +148,10 @@ int main(int argc, char **argv) {
 
             // visual heartbeat indicator
             if (blue_led_on) {
-                BLUE_LED_OFF();
+                //BLUE_LED_OFF();
                 blue_led_on = false;
             } else {
-                BLUE_LED_ON();
+                //BLUE_LED_ON();
                 blue_led_on = true;
             }
 
@@ -209,6 +213,8 @@ int main(int argc, char **argv) {
     // unreachable
     return (EXIT_SUCCESS);
 }
+
+#define ACTUATOR_ID 2
 
 static void __interrupt() interrupt_handler() {
     if (PIR5) {
