@@ -76,8 +76,9 @@
       <itemPath>main.c</itemPath>
       <itemPath>error_checks.c</itemPath>
       <itemPath>sensor_general.c</itemPath>
+      <itemPath>actuator.c</itemPath>
+      <itemPath>IOExpanderDriver.c</itemPath>
     </logicalFolder>
-    <itemPath>actuator.c</itemPath>
   </logicalFolder>
   <sourceRootList>
     <Elem>canlib</Elem>
@@ -91,7 +92,7 @@
         <targetDevice>PIC18F26K83</targetDevice>
         <targetHeader></targetHeader>
         <targetPluginBoard></targetPluginBoard>
-        <platformTool>snap</platformTool>
+        <platformTool>noID</platformTool>
         <languageToolchain>XC8</languageToolchain>
         <languageToolchainVersion>2.46</languageToolchainVersion>
         <platform>2</platform>
@@ -126,6 +127,10 @@
         <makeCustomizationEnableLongLines>false</makeCustomizationEnableLongLines>
         <makeCustomizationNormalizeHexFile>false</makeCustomizationNormalizeHexFile>
       </makeCustomizationType>
+      <item path="../cansw_actuator/actuator.h" ex="true" overriding="false">
+      </item>
+      <item path="../cansw_actuator/board.h" ex="true" overriding="false">
+      </item>
       <HI-TECH-COMP>
         <property key="additional-warnings" value="true"/>
         <property key="asmlist" value="true"/>
@@ -741,6 +746,8 @@
         <property key="periphComp4.gte" value="gt"/>
         <property key="periphComp5.gte" value="gt"/>
         <property key="periphComp6.gte" value="gt"/>
+        <property key="programmerToGoFilePath"
+                  value="/home/jason/rocketry/cansw_propulsion/debug/default/default_ptg"/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.pgmentry.voltage" value="low"/>
@@ -1258,8 +1265,6 @@
                   value="${memories.instruction.ram.ranges}"/>
         <property key="memories.programmemory" value="true"/>
         <property key="memories.programmemory.ranges" value="0-ffff"/>
-        <property key="programmerToGoFilePath"
-                  value="/home/jason/rocketry/cansw_propulsion/debug/default/default_ptg"/>
         <property key="programoptions.donoteraseauxmem" value="false"/>
         <property key="programoptions.eraseb4program" value="true"/>
         <property key="programoptions.pgmentry.voltage" value="low"/>

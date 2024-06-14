@@ -7,7 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <rocketlib.h>
+#include "rocketlib/include/i2c.h"
 #include <stdint.h>
 
 #define PCA_ADDRESS 0x41

@@ -86,6 +86,6 @@ void actuator_send_status(enum ACTUATOR_STATE req_state) {
     enum ACTUATOR_STATE curr_state = get_actuator_state();
 
     can_msg_t stat_msg;
-    build_actuator_stat_msg(0, ACTUATOR_ID, curr_state, req_state, &stat_msg);
+    build_actuator_stat_msg(0, 0, curr_state, req_state, &stat_msg);
     txb_enqueue(&stat_msg);
 }
