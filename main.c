@@ -293,9 +293,9 @@ static void can_msg_handler(const can_msg_t *msg) {
                 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
                         //have to figure out msg handling for this
                         //need to know how multiple solenoid messages are struct
-                        //ured in can
+                        //used in can
                 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
-                        requested_actuator_state_vent = get_req_actuator_state(msg);
+                        requested_actuator_state_vent = get_req_actu_state(msg);
                 #endif
                 /* 
                  * Parse the Given Actuator states into each different state
