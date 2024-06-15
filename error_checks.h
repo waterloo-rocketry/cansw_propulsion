@@ -20,7 +20,6 @@
 // General board status checkers
 bool check_battery_voltage_error(void);
 bool is_batt_voltage_critical(void);
-bool check_actuator_pin_error(enum ACTUATOR_STATE req_state);
 
 // General board status checkers
 bool check_bus_current_error(void);

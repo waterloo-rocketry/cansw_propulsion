@@ -67,25 +67,6 @@ bool check_battery_voltage_error(void){    //returns mV
 bool is_batt_voltage_critical(void) {
     return battery_voltage_critical;
 }
-
-bool check_actuator_pin_error(enum ACTUATOR_STATE req_state) {
-    enum ACTUATOR_STATE cur_state = get_actuator_state();
-    bool valid = true;
-    if (cur_state == ACTUATOR_ILLEGAL) { valid = false; }
-
-    if (!valid) {
-        uint8_t state_data[2] = {0};
-        state_data[0] = req_state;
-        state_data[1] = cur_state;
-        can_msg_t error_msg;
-        build_board_stat_msg(millis(), E_ACTUATOR_STATE, state_data, 2, &error_msg);
-        txb_enqueue(&error_msg);
-        return false;
-    }
-
-    return true;
-}
-
 bool check_bus_current_error(void){
     // ADC is using FVR of 1.024V
     adc_result_t sense_raw_mV = ADCC_GetSingleConversion(channel_ANA0) / 4; // FIXME ADC Channel

@@ -27,12 +27,40 @@
 
 #define SAFE_STATE_ENABLED 1
 
+//ADD more actuator ID's if propulsion wants more stuff
+#if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
+#define ACTUATOR_ID_1 
+#define ACTUATOR_ID_2 
+#define ACTUATOR_ID_3
+#define SAFE_STATE_FILL 1
+#define SAFE_STATE_INJ 1
+#define FILL_DUMP_PIN
+#define INJECTOR_PIN 
+
+#elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
+#define ACTUATOR_ID_1 
+#define SAFE_STATE_VENT 1
+#define VENT_VALVE_PIN 
+
+#else 
+#error "INVALID_BOARD_UNIQUE_ID"
+
+#endif
+
 static void can_msg_handler(const can_msg_t *msg);
 static void send_status_ok(void);
 
 // Follows ACTUATOR_STATE in message_types.h
 // SHOULD ONLY BE MODIFIED IN ISR
-volatile enum ACTUATOR_STATE requested_actuator_state = SAFE_STATE;
+#if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
+    volatile enum ACTUATOR_STATE requested_actuator_state = SAFE_STATE_FILL;
+    volatile enum ACTUATOR_STATE requested_actuator_state2 = SAFE_STATE_INJ;
+#elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
+    volatile enum ACTUATOR_STATE requested_actuator_state = SAFE_STATE_VENT;
+    
+#endif
+
+
 
 volatile bool seen_can_message = false;
 volatile bool seen_can_command = false;
@@ -87,8 +115,7 @@ int main(int argc, char **argv) {
     uint32_t last_command_millis = millis();
 
     // Test the IO Expander
-    i2c_write_reg8(IOEXP_I2C_ADDR, 3, 0);
-    i2c_write_reg8(IOEXP_I2C_ADDR, 1, 0b101);
+    pca_init();
 
     bool blue_led_on = false;   // visual heartbeat
     while (1) {
@@ -127,7 +154,6 @@ int main(int argc, char **argv) {
             bool status_ok = true;
             status_ok &= check_battery_voltage_error();
             status_ok &= check_bus_current_error();
-            status_ok &= check_actuator_pin_error(requested_actuator_state);
 
             // if there was an issue, a message would already have been sent out
             if (status_ok) { send_status_ok(); }
@@ -139,10 +165,16 @@ int main(int argc, char **argv) {
             if (SAFE_STATE_ENABLED && (
                     (millis() - last_command_millis > MAX_CAN_IDLE_TIME_MS)
                     || is_batt_voltage_critical())) {
-                actuator_send_status(SAFE_STATE);
-                actuator_set(SAFE_STATE);
+                //actuator_send_status(SAFE_STATE);
+                #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ) 
+                    actuator_set(SAFE_STATE_FILL, FILL_DUMP_PIN);  
+                    actuator_set(SAFE_STATE_INJ, INJECTOR_PIN); 
+                #elif
+                    actuator_set(SAVE_STATE_VENT, VENT_PIN);
+                #endif
+                
             } else {
-                actuator_send_status(requested_actuator_state);
+               // actuator_send_status(requested_actuator_state);
                 actuator_set(requested_actuator_state);
             }
 
@@ -170,7 +202,6 @@ int main(int argc, char **argv) {
             uint16_t pressure_4_20_psi = update_pressure_psi_low_pass();
 
             can_msg_t sensor_msg;
-            build_analog_data_msg(millis(), PT_SENSOR_ID, pressure_4_20_psi, &sensor_msg);
             txb_enqueue(&sensor_msg);
         }
 #endif
@@ -239,14 +270,17 @@ static void can_msg_handler(const can_msg_t *msg) {
         return;
     }
 
+    //make able to handle multiple actuator
     switch (msg_type) {
         case MSG_GENERAL_CMD:
             cmd_type = get_general_cmd_type(msg);
             if (cmd_type == BUS_DOWN_WARNING) {
+            #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
                 requested_actuator_state = SAFE_STATE;
             }
             break;
             
+        //Make it handle multiple actuator    
         case MSG_ACTUATOR_CMD:
             // see message_types.h for message format
             if (get_actuator_id(msg) == ACTUATOR_ID) {
