@@ -53,10 +53,10 @@ static void send_status_ok(void);
 // Follows ACTUATOR_STATE in message_types.h
 // SHOULD ONLY BE MODIFIED IN ISR
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
-    volatile enum ACTUATOR_STATE requested_actuator_state = SAFE_STATE_FILL;
-    volatile enum ACTUATOR_STATE requested_actuator_state2 = SAFE_STATE_INJ;
+    volatile enum ACTUATOR_STATE requested_actuator_state_fill = SAFE_STATE_FILL;
+    volatile enum ACTUATOR_STATE requested_actuator_state_inj = SAFE_STATE_INJ;
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
-    volatile enum ACTUATOR_STATE requested_actuator_state = SAFE_STATE_VENT;
+    volatile enum ACTUATOR_STATE requested_actuator_state_vent = SAFE_STATE_VENT;
     
 #endif
 
@@ -169,7 +169,7 @@ int main(int argc, char **argv) {
                 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ) 
                     actuator_set(SAFE_STATE_FILL, FILL_DUMP_PIN);  
                     actuator_set(SAFE_STATE_INJ, INJECTOR_PIN); 
-                #elif
+                #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
                     actuator_set(SAVE_STATE_VENT, VENT_PIN);
                 #endif
                 
@@ -276,7 +276,11 @@ static void can_msg_handler(const can_msg_t *msg) {
             cmd_type = get_general_cmd_type(msg);
             if (cmd_type == BUS_DOWN_WARNING) {
             #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
-                requested_actuator_state = SAFE_STATE;
+                requested_actuator_state_fill = SAFE_STATE_FILL;
+                requested_actuator_state_inj = SAFE_STATE_INJ;
+            #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
+                requested_actuator_state_vent=SAFE_STATE_VENT
+            #endif
             }
             break;
             
@@ -285,7 +289,19 @@ static void can_msg_handler(const can_msg_t *msg) {
             // see message_types.h for message format
             if (get_actuator_id(msg) == ACTUATOR_ID) {
                 // vent position will be updated synchronously
-                requested_actuator_state = get_req_actuator_state(msg);
+                
+                #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
+                        //have to figure out msg handling for this
+                        //need to know how multiple solenoid messages are struct
+                        //ured in can
+                #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
+                        requested_actuator_state_vent = get_req_actuator_state(msg);
+                #endif
+                /* 
+                 * Parse the Given Actuator states into each different state
+                 * Then use that to set the requested_actuator_states of each
+                 * solenoid
+                 */
                 // keep track of heartbeat here
                 seen_can_command = true;
             }
