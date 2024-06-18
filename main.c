@@ -29,18 +29,14 @@
 
 //ADD more actuator ID's if propulsion wants more stuff
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
-#define ACTUATOR_ID_1 
-#define ACTUATOR_ID_2 
-#define ACTUATOR_ID_3
 #define SAFE_STATE_FILL 1
 #define SAFE_STATE_INJ 1
 #define FILL_DUMP_PIN 1
 #define INJECTOR_PIN 2
 
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
-#define ACTUATOR_ID_1 
 #define SAFE_STATE_VENT 1
-#define VENT_VALVE_PIN 
+#define VENT_VALVE_PIN 1
 
 #else 
 #error "INVALID_BOARD_UNIQUE_ID"
@@ -171,7 +167,7 @@ int main(int argc, char **argv) {
                     actuator_set(SAFE_STATE_FILL, FILL_DUMP_PIN);  
                     actuator_set(SAFE_STATE_INJ, INJECTOR_PIN); 
                 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
-                    actuator_set(SAVE_STATE_VENT, VENT_PIN);
+                    actuator_set(SAFE_STATE_VENT, VENT_VALVE_PIN);
                 #endif
                 
             } else {
@@ -179,7 +175,7 @@ int main(int argc, char **argv) {
                     actuator_set(requested_actuator_state_inj, INJECTOR_PIN);
                     actuator_set(requested_actuator_state_fill, FILL_DUMP_PIN);
                 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
-                    actuator_set(requested_actuator_state_vent, VENT_PIN);
+                    actuator_set(requested_actuator_state_vent, VENT_VALVE_PIN);
                 #endif
             }
 
@@ -284,7 +280,7 @@ static void can_msg_handler(const can_msg_t *msg) {
                 requested_actuator_state_fill = SAFE_STATE_FILL;
                 requested_actuator_state_inj = SAFE_STATE_INJ;
             #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
-                requested_actuator_state_vent=SAFE_STATE_VENT
+                requested_actuator_state_vent=SAFE_STATE_VENT;
             #endif
             }
             break;
@@ -298,17 +294,12 @@ static void can_msg_handler(const can_msg_t *msg) {
                 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
                     if(get_actuator_id(msg) == ACTUATOR_INJECTOR_VALVE)
                         requested_actuator_state_inj=get_req_actuator_state(msg);
-                    else if(get_actuator_id(msg)==ACTUATOR_FILL_DUMP_VALVE)
+                    else if(get_actuator_id(msg) == ACTUATOR_FILL_DUMP_VALVE)
                         requested_actuator_state_fill=get_req_actuator_state(msg);
                 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
-                        if(get_actuator_id(msg) == ACTUATOR_VENT_VALVE
+                        if(get_actuator_id(msg) == ACTUATOR_VENT_VALVE)
                         requested_actuator_state_vent = get_req_actuator_state(msg);
                 #endif
-                /* 
-                 * Parse the Given Actuator states into each different state
-                 * Then use that to set the requested_actuator_states of each
-                 * solenoid
-                 */
                 // keep track of heartbeat here
                 seen_can_command = true;
             }
