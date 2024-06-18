@@ -125,7 +125,8 @@ int main(int argc, char **argv) {
             seen_can_message = false;
             last_message_millis = millis();
         }
-
+        
+    #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
         if (millis() - last_message_millis > MAX_BUS_DEAD_TIME_ms &&
             (SAFE_STATE_ENABLED || requested_actuator_state_inj == SAFE_STATE)) {
             // Only reset if safe state is enabled (aka this isn't injector valve)
@@ -135,7 +136,7 @@ int main(int argc, char **argv) {
             // We've got too long without seeing a valid CAN message (including one of ours)
             RESET();
         }
-
+    #endif
         if (millis() - last_status_millis > STATUS_TIME_DIFF_ms) {
             last_status_millis = millis();
 
@@ -174,8 +175,12 @@ int main(int argc, char **argv) {
                 #endif
                 
             } else {
-               // actuator_send_status(requested_actuator_state);
-                //actuator_set(requested_actuator_state); Pranav fix
+                #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
+                    actuator_set(requested_actuator_state_inj, INJECTOR_PIN);
+                    actuator_set(requested_actuator_state_fill, FILL_DUMP_PIN);
+                #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
+                    actuator_set(requested_actuator_state_vent, VENT_PIN);
+                #endif
             }
 
             // visual heartbeat indicator
@@ -291,11 +296,13 @@ static void can_msg_handler(const can_msg_t *msg) {
                 // vent position will be updated synchronously
                 
                 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
-                        //have to figure out msg handling for this
-                        //need to know how multiple solenoid messages are struct
-                        //used in can
+                    if(get_actuator_id(msg) == ACTUATOR_INJECTOR_VALVE)
+                        requested_actuator_state_inj=get_req_actuator_state(msg);
+                    else if(get_actuator_id(msg)==ACTUATOR_FILL_DUMP_VALVE)
+                        requested_actuator_state_fill=get_req_actuator_state(msg);
                 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
-                        requested_actuator_state_vent = get_req_actu_state(msg);
+                        if(get_actuator_id(msg) == ACTUATOR_VENT_VALVE
+                        requested_actuator_state_vent = get_req_actuator_state(msg);
                 #endif
                 /* 
                  * Parse the Given Actuator states into each different state
