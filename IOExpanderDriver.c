@@ -26,6 +26,6 @@ void set_output(uint8_t states)
 
 uint8_t get_output()
 {   uint8_t current_state;
-    i2c_read_reg8(PCA_ADDRESS, 1, &current_state)
+    i2c_read_reg8(PCA_ADDRESS, 1, &current_state);
     return current_state;
 }

@@ -34,8 +34,8 @@
 #define ACTUATOR_ID_3
 #define SAFE_STATE_FILL 1
 #define SAFE_STATE_INJ 1
-#define FILL_DUMP_PIN
-#define INJECTOR_PIN 
+#define FILL_DUMP_PIN 1
+#define INJECTOR_PIN 2
 
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
 #define ACTUATOR_ID_1 
@@ -127,7 +127,7 @@ int main(int argc, char **argv) {
         }
 
         if (millis() - last_message_millis > MAX_BUS_DEAD_TIME_ms &&
-            (SAFE_STATE_ENABLED || requested_actuator_state == SAFE_STATE)) {
+            (SAFE_STATE_ENABLED || requested_actuator_state_inj == SAFE_STATE)) {
             // Only reset if safe state is enabled (aka this isn't injector valve)
             // OR this is injector valve and the currently requested state is the safe
             // state (closed)
@@ -175,7 +175,7 @@ int main(int argc, char **argv) {
                 
             } else {
                // actuator_send_status(requested_actuator_state);
-                actuator_set(requested_actuator_state);
+                //actuator_set(requested_actuator_state); Pranav fix
             }
 
             // visual heartbeat indicator
