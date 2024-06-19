@@ -154,7 +154,7 @@
         <property key="default-bitfield-type" value="true"/>
         <property key="default-char-type" value="true"/>
         <property key="define-macros"
-                  value="BOARD_UNIQUE_ID=BOARD_ID_PROPULSION_VENT;PT_SENSOR_ID=SENSOR_PRESSURE_CC"/>
+                  value="BOARD_UNIQUE_ID=BOARD_ID_PROPULSION_INJ;PT_SENSOR_ID=SENSOR_PRESSURE_CC"/>
         <property key="disable-optimizations" value="true"/>
         <property key="extra-include-directories" value="canlib;rocketlib/include"/>
         <property key="favor-optimization-for" value="-speed,+space"/>
