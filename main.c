@@ -237,8 +237,12 @@ int main(int argc, char **argv) {
 #if PRES_CC_TIME_DIFF_ms 
         if(millis()-last_pres_cc_millis > PRES_CC_TIME_DIFF_ms)
         {
-            
+            last_pres_fuel_millis = millis();
+            uint16_t pressure_fuel_psi = update_pressure_psi_low_pass(SENSOR_PRESSURE_CC);
+            can_msg_t sensor_msg;
+            txb_enqueue(&sensor_msg);  
         }
+#endif
         
 #if VENT_TEMP_TIME_DIFF_ms
         if (millis() - last_temp_millis > VENT_TEMP_TIME_DIFF_ms) {
