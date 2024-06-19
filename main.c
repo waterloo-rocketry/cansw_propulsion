@@ -208,14 +208,14 @@ int main(int argc, char **argv) {
 #if PRES_TIME_DIFF_ms
         if (millis() - last_pres_low_millis > PRES_TIME_DIFF_ms) {
             last_pres_low_millis = millis();
-            update_pressure_psi_low_pass();
+            update_pressure_psi_low_pass(channel_ANA0);
         }
 #endif
 #if PRES_PNEUMATICS_TIME_DIFF_ms
         if (millis() - last_pres_pneumatics_millis > PRES_PNEUMATICS_TIME_DIFF_ms) {
             last_pres_pneumatics_millis = millis();
 
-            uint16_t pressure_pneumatics_psi = get_pressure_pneumatic_psi();
+            uint16_t pressure_pneumatics_psi = get_pressure_pneumatic_psi(channel_ANA0);
 
             can_msg_t sensor_msg;
             build_analog_data_msg(
