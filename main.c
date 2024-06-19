@@ -35,7 +35,6 @@
 #define PRES_PNEUMATICS_TIME_DIFF_ms 500 // 2 Hz
 #define PRES_FUEL_TIME_DIFF_ms 500
 #define PRES_CC_TIME_DIFF_ms 500
-#define adcc_channel_t
 
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
 #define SAFE_STATE_VENT 1
