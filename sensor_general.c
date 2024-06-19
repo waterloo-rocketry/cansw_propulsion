@@ -80,7 +80,7 @@ uint32_t get_pressure_pneumatic_psi(enum adcc_channel_t) {
     //  analog output[V] = ((5[V]-0.6[V])/(1[MPa] - (-0.1[MPa]))*pressure[MPa], aka y = 4x + 1
     //  calibrated based on the PSE540 and DAQ.
     int16_t pressure_psi = (int16_t)(((v - 1) / 4) * 165.34 + 5.2);
-
+   
     // int32_t pressure_psi = (int32_t) (v * 39.2f*3.0f - 39.2f);
 
     return (uint16_t)pressure_psi;
@@ -93,9 +93,9 @@ uint32_t get_pressure_pneumatic_psi(enum adcc_channel_t) {
 double alpha_low = LOW_PASS_ALPHA(LOW_PASS_RESPONSE_TIME);
 double low_pass_pressure_psi = 0;
 
-uint16_t update_pressure_psi_low_pass(void) {
+uint16_t update_pressure_psi_low_pass(enum adcc_channel_t) {
 
-    int16_t pressure_psi = get_pressure_4_20_psi();
+    int16_t pressure_psi = get_pressure_4_20_psi(adcc_channel_t);
 
     low_pass_pressure_psi = alpha_low * low_pass_pressure_psi + (1.0 - alpha_low) * pressure_psi;
     return (uint16_t)low_pass_pressure_psi;

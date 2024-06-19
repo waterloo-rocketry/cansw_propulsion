@@ -20,8 +20,8 @@
 // Set any of these to zero to disable
 #define STATUS_TIME_DIFF_ms 500 // 2 Hz
 #define PRES_OX_CC_TIME_DIFF_ms 500 // 2 Hz
-#define PRES_PNEUMATICS_TIME_DIFF_ms 500 // 2 Hz
-#define TEMP_TIME_DIFF_ms 0 // Disabled
+
+
 #define MAX_LOOP_TIME_DIFF_ms 20
 #define MAX_CAN_IDLE_TIME_MS 1000
 
@@ -33,10 +33,14 @@
 #define SAFE_STATE_INJ 1
 #define FILL_DUMP_PIN 1
 #define INJECTOR_PIN 2
+#define PRES_PNEUMATICS_TIME_DIFF_ms 500 // 2 Hz
+#define PRES_FUEL_TIME_DIFF_ms 500
+#define PRES_CC_TIME_DIFF_ms 500
 
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
 #define SAFE_STATE_VENT 1
 #define VENT_VALVE_PIN 1
+#define VENT_TEMP_TIME_DIFF_ms 0 
 
 #else 
 #error "INVALID_BOARD_UNIQUE_ID"
@@ -53,6 +57,7 @@ static void send_status_ok(void);
     volatile enum ACTUATOR_STATE requested_actuator_state_inj = SAFE_STATE_INJ;
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
     volatile enum ACTUATOR_STATE requested_actuator_state_vent = SAFE_STATE_VENT;
+    
     
 #endif
 
@@ -103,13 +108,21 @@ int main(int argc, char **argv) {
     uint32_t last_message_millis = 0; // last time we saw a can message
     // loop timers
     uint32_t last_status_millis = millis();
-    uint32_t last_pres_ox_cc_millis = millis();
-    uint32_t last_pres_pneumatics_millis = millis();
     uint32_t last_pres_low_millis = millis();
-    uint32_t last_temp_millis = millis();
+
     uint32_t last_millis = millis();
     uint32_t last_command_millis = millis();
+#if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
+    uint32_t last_pres_fuel_millis = millis();
+    uint32_t last_pres_pneumatics_millis = millis();
+    uint32_t last_pres_cc_millis = millis();
+#endif
 
+#if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
+    uint32_t last_pres_ox_millis=millis();
+    uint32_t last_vent_temp_millis = millis();
+#endif
+    
     // Test the IO Expander
     pca_init();
 
@@ -192,20 +205,6 @@ int main(int argc, char **argv) {
             last_millis = millis();
         }
         
-#if PRES_OX_CC_TIME_DIFF_ms
-        if (millis() - last_pres_ox_cc_millis > PRES_OX_CC_TIME_DIFF_ms) {
-            last_pres_ox_cc_millis = millis();
-
-            // No low-pass filter
-            // uint16_t pressure_4_20_psi = get_pressure_4_20_psi();
-
-            // With low-pass filter, uncomment if low-pass filtering required:
-            uint16_t pressure_4_20_psi = update_pressure_psi_low_pass();
-
-            can_msg_t sensor_msg;
-            txb_enqueue(&sensor_msg);
-        }
-#endif
 #if PRES_TIME_DIFF_ms
         if (millis() - last_pres_low_millis > PRES_TIME_DIFF_ms) {
             last_pres_low_millis = millis();
@@ -224,9 +223,26 @@ int main(int argc, char **argv) {
             txb_enqueue(&sensor_msg);
         }
 #endif
-#if TEMP_TIME_DIFF_ms
-        if (millis() - last_temp_millis > TEMP_TIME_DIFF_ms) {
-            last_temp_millis = millis();
+        
+#if PRES_FUEL_TIME_DIFF_ms
+        if(millis()-last_pres_fuel_millis > PRES_FUEL_TIME_DIFF_ms)
+        {
+            last_pres_fuel_millis = millis();
+            uint16_t pressure_fuel_psi = update_pressure_psi_low_pass(SENSOR_PRESSURE_FUEL);
+            can_msg_t sensor_msg;
+            txb_enqueue(&sensor_msg);
+        }
+#endif
+
+#if PRES_CC_TIME_DIFF_ms 
+        if(millis()-last_pres_cc_millis > PRES_CC_TIME_DIFF_ms)
+        {
+            
+        }
+        
+#if VENT_TEMP_TIME_DIFF_ms
+        if (millis() - last_temp_millis > VENT_TEMP_TIME_DIFF_ms) {
+            last_vent_temp_millis = millis();
 
             uint16_t temperature_c = get_temperature_c();
 
