@@ -29,5 +29,5 @@ uint32_t get_pressure_4_20_psi(adcc_channel_t adc_channel);
 uint32_t get_pressure_pneumatic_psi(adcc_channel_t adc_channel);
 uint16_t update_pressure_psi_low_pass(adcc_channel_t adc_channel);
 uint16_t get_temperature_c(adcc_channel_t adc_channel);
-
+uint16_t get_hall_sensor_reading(adcc_channel_t adc_channel);
 #endif /* SENSOR_GEN_H */

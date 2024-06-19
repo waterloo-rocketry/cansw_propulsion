@@ -35,6 +35,9 @@
 #define PRES_PNEUMATICS_TIME_DIFF_ms 500 // 2 Hz
 #define PRES_FUEL_TIME_DIFF_ms 500
 #define PRES_CC_TIME_DIFF_ms 500
+#define HALLSENSE_FUEL_TIME_DIFF_ms 500 // 2 Hz
+#define HALLSENSE_OX_TIME_DIFF_ms 500 // 2 Hz
+#define HALLSENSE_FILL_TIME_DIFF_ms 500 // 2 Hz
 
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
 #define SAFE_STATE_VENT 1
@@ -115,9 +118,15 @@ int main(int argc, char **argv) {
     uint32_t last_pres_fuel_millis = millis();
     uint32_t last_pres_pneumatics_millis = millis();
     uint32_t last_pres_cc_millis = millis();
+    uint32_t last_hallsense_fuel_millis=millis();
+    uint32_t last_hallsense_ox_millis=millis();
+    uint32_t last_hallsense_fill_millis=millis();
     adcc_channel_t pres_fuel;
     adcc_channel_t pres_pneumatics;
     adcc_channel_t pres_cc;
+    adcc_channel_t hallsense_fuel;
+    adcc_channel_t hallsense_ox;
+    adcc_channel_t hallsense_fill;
 #endif
 
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
@@ -252,6 +261,43 @@ int main(int argc, char **argv) {
             txb_enqueue(&sensor_msg);  
         }
 #endif
+        
+#if HALLSENSE_FUEL_TIME_DIFF_ms 
+        if(millis()-last_hallsense_fuel_millis > HALLSENSE_FUEL_TIME_DIFF_ms)
+        {
+            last_hallsense_fuel_millis = millis();
+            uint16_t hallsense_fuel_flux = get_hall_sensor_reading(hallsense_fuel);
+            can_msg_t sensor_msg;
+            build_analog_data_msg(
+                millis(), SENSOR_HALL_FUEL_INJ, hallsense_fuel_flux, &sensor_msg);
+            txb_enqueue(&sensor_msg);  
+        }
+#endif
+       
+#if HALLSENSE_OX_TIME_DIFF_ms 
+        if(millis()-last_hallsense_ox_millis > HALLSENSE_OX_TIME_DIFF_ms)
+        {
+            last_hallsense_ox_millis = millis();
+            uint16_t hallsense_ox_flux = get_hall_sensor_reading(hallsense_ox);
+            can_msg_t sensor_msg;
+            build_analog_data_msg(
+                millis(), SENSOR_HALL_OX_INJ, hallsense_ox_flux, &sensor_msg);
+            txb_enqueue(&sensor_msg);  
+        }
+#endif
+
+#if HALLSENSE_FILL_TIME_DIFF_ms 
+        if(millis()-last_hallsense_fill_millis > HALLSENSE_FILL_TIME_DIFF_ms)
+        {
+            last_hallsense_fill_millis = millis();
+            uint16_t hallsense_fill_flux = get_hall_sensor_reading(hallsense_fill);
+            can_msg_t sensor_msg;
+            build_analog_data_msg(
+                millis(), SENSOR_HALL_FILL, hallsense_fill_flux, &sensor_msg);
+            txb_enqueue(&sensor_msg);  
+        }
+#endif
+
         
 #if VENT_TEMP_TIME_DIFF_ms
         if (millis() - last_temp_millis > VENT_TEMP_TIME_DIFF_ms) {

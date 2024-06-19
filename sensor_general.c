@@ -120,3 +120,8 @@ uint16_t get_temperature_c(adcc_channel_t adc_channel) {
 
     return (uint16_t)(1 / invk - 273);
 }
+
+uint16_t get_hall_sensor_reading(adcc_channel_t adc_channel)
+{
+    return ADCC_GetSingleConversion(adc_channel);
+}
