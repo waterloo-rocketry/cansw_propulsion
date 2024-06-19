@@ -19,7 +19,6 @@
 
 // Set any of these to zero to disable
 #define STATUS_TIME_DIFF_ms 500 // 2 Hz
-#define PRES_OX_CC_TIME_DIFF_ms 500 // 2 Hz
 
 
 #define MAX_LOOP_TIME_DIFF_ms 20
@@ -36,6 +35,7 @@
 #define PRES_PNEUMATICS_TIME_DIFF_ms 500 // 2 Hz
 #define PRES_FUEL_TIME_DIFF_ms 500
 #define PRES_CC_TIME_DIFF_ms 500
+#define adcc_channel_t
 
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
 #define SAFE_STATE_VENT 1
@@ -116,11 +116,16 @@ int main(int argc, char **argv) {
     uint32_t last_pres_fuel_millis = millis();
     uint32_t last_pres_pneumatics_millis = millis();
     uint32_t last_pres_cc_millis = millis();
+    adcc_channel_t pres_fuel;
+    adcc_channel_t pres_pneumatics;
+    adcc_channel_t pres_cc;
 #endif
 
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
     uint32_t last_pres_ox_millis=millis();
     uint32_t last_vent_temp_millis = millis();
+    adcc_channel_t pres_ox;
+    adcc_channel_t temp_vent
 #endif
     
     // Test the IO Expander
@@ -211,11 +216,12 @@ int main(int argc, char **argv) {
             update_pressure_psi_low_pass(channel_ANA0);
         }
 #endif
+        
 #if PRES_PNEUMATICS_TIME_DIFF_ms
         if (millis() - last_pres_pneumatics_millis > PRES_PNEUMATICS_TIME_DIFF_ms) {
             last_pres_pneumatics_millis = millis();
 
-            uint16_t pressure_pneumatics_psi = get_pressure_pneumatic_psi(channel_ANA0);
+            uint16_t pressure_pneumatics_psi = get_pressure_pneumatic_psi(pres_pneumatics);
 
             can_msg_t sensor_msg;
             build_analog_data_msg(
@@ -228,8 +234,10 @@ int main(int argc, char **argv) {
         if(millis()-last_pres_fuel_millis > PRES_FUEL_TIME_DIFF_ms)
         {
             last_pres_fuel_millis = millis();
-            uint16_t pressure_fuel_psi = update_pressure_psi_low_pass(SENSOR_PRESSURE_FUEL);
+            uint16_t pressure_fuel_psi = update_pressure_psi_low_pass(pres_fuel);
             can_msg_t sensor_msg;
+            build_analog_data_msg(
+                millis(), SENSOR_PRESSURE_FUEL, pressure_fuel_psi, &sensor_msg);
             txb_enqueue(&sensor_msg);
         }
 #endif
@@ -237,9 +245,11 @@ int main(int argc, char **argv) {
 #if PRES_CC_TIME_DIFF_ms 
         if(millis()-last_pres_cc_millis > PRES_CC_TIME_DIFF_ms)
         {
-            last_pres_fuel_millis = millis();
-            uint16_t pressure_fuel_psi = update_pressure_psi_low_pass(SENSOR_PRESSURE_CC);
+            last_pres_cc_millis = millis();
+            uint16_t pressure_cc_psi = update_pressure_psi_low_pass(pres_cc);
             can_msg_t sensor_msg;
+            build_analog_data_msg(
+                millis(), SENSOR_PRESSURE_CC, pressure_cc_psi, &sensor_msg);
             txb_enqueue(&sensor_msg);  
         }
 #endif
@@ -248,14 +258,25 @@ int main(int argc, char **argv) {
         if (millis() - last_temp_millis > VENT_TEMP_TIME_DIFF_ms) {
             last_vent_temp_millis = millis();
 
-            uint16_t temperature_c = get_temperature_c(SENSOR_VENT_TEMP);
+            uint16_t temperature_c = get_temperature_c(temp_vent);
 
             can_msg_t sensor_msg;
             build_analog_data_msg(millis(), SENSOR_VENT_TEMP, temperature_c, &sensor_msg);
             txb_enqueue(&sensor_msg);
         }
 #endif
-
+        
+#if PRES_OX_TIME_DIFF_ms 
+        if(millis()-last_pres_cc_millis > PRES_OX_TIME_DIFF_ms)
+        {
+            last_pres_ox_millis = millis();
+            uint16_t pressure_ox_psi = update_pressure_psi_low_pass(pres_ox);
+            can_msg_t sensor_msg;
+            build_analog_data_msg(
+                millis(), SENSOR_PRESSURE_OX, pressure_ox_psi, &sensor_msg);
+            txb_enqueue(&sensor_msg);  
+        }
+#endif
         // send any queued CAN messages
         txb_heartbeat();
     }
