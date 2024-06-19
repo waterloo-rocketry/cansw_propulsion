@@ -244,7 +244,7 @@ int main(int argc, char **argv) {
         if (millis() - last_temp_millis > VENT_TEMP_TIME_DIFF_ms) {
             last_vent_temp_millis = millis();
 
-            uint16_t temperature_c = get_temperature_c();
+            uint16_t temperature_c = get_temperature_c(SENSOR_VENT_TEMP);
 
             can_msg_t sensor_msg;
             build_analog_data_msg(millis(), SENSOR_VENT_TEMP, temperature_c, &sensor_msg);
