@@ -4,14 +4,13 @@
 #include "canlib/canlib.h"
 #include "canlib/message_types.h"
 
-
 #include "mcc_generated_files/system/system.h"
 
+#include "IOExpanderDriver.h"
+#include "actuator.h"
 #include "error_checks.h"
 #include "i2c.h"
 #include "sensor_general.h"
-#include "actuator.h"
-#include "IOExpanderDriver.h"
 
 #include <xc.h>
 
@@ -20,13 +19,12 @@
 // Set any of these to zero to disable
 #define STATUS_TIME_DIFF_ms 500 // 2 Hz
 
-
 #define MAX_LOOP_TIME_DIFF_ms 20
 #define MAX_CAN_IDLE_TIME_MS 1000
 
 #define SAFE_STATE_ENABLED 1
 
-//ADD more actuator ID's if propulsion wants more stuff
+// ADD more actuator ID's if propulsion wants more stuff
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
 #define SAFE_STATE_FILL 1
 #define SAFE_STATE_INJ 1
@@ -42,9 +40,9 @@
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
 #define SAFE_STATE_VENT 1
 #define VENT_VALVE_PIN 1
-#define VENT_TEMP_TIME_DIFF_ms 0 
+#define VENT_TEMP_TIME_DIFF_ms 0
 
-#else 
+#else
 #error "INVALID_BOARD_UNIQUE_ID"
 
 #endif
@@ -55,15 +53,12 @@ static void send_status_ok(void);
 // Follows ACTUATOR_STATE in message_types.h
 // SHOULD ONLY BE MODIFIED IN ISR
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
-    volatile enum ACTUATOR_STATE requested_actuator_state_fill = SAFE_STATE_FILL;
-    volatile enum ACTUATOR_STATE requested_actuator_state_inj = SAFE_STATE_INJ;
+volatile enum ACTUATOR_STATE requested_actuator_state_fill = SAFE_STATE_FILL;
+volatile enum ACTUATOR_STATE requested_actuator_state_inj = SAFE_STATE_INJ;
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
-    volatile enum ACTUATOR_STATE requested_actuator_state_vent = SAFE_STATE_VENT;
-    
-    
+volatile enum ACTUATOR_STATE requested_actuator_state_vent = SAFE_STATE_VENT;
+
 #endif
-
-
 
 volatile bool seen_can_message = false;
 volatile bool seen_can_command = false;
@@ -76,7 +71,7 @@ uint8_t tx_pool[200];
 int main(int argc, char **argv) {
     // MCC generated initializer
     SYSTEM_Initialize();
-	
+
     LED_init();
 
     // init our millisecond function
@@ -118,9 +113,9 @@ int main(int argc, char **argv) {
     uint32_t last_pres_fuel_millis = millis();
     uint32_t last_pres_pneumatics_millis = millis();
     uint32_t last_pres_cc_millis = millis();
-    uint32_t last_hallsense_fuel_millis=millis();
-    uint32_t last_hallsense_ox_millis=millis();
-    uint32_t last_hallsense_fill_millis=millis();
+    uint32_t last_hallsense_fuel_millis = millis();
+    uint32_t last_hallsense_ox_millis = millis();
+    uint32_t last_hallsense_fill_millis = millis();
     adcc_channel_t pres_fuel;
     adcc_channel_t pres_pneumatics;
     adcc_channel_t pres_cc;
@@ -130,16 +125,16 @@ int main(int argc, char **argv) {
 #endif
 
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
-    uint32_t last_pres_ox_millis=millis();
+    uint32_t last_pres_ox_millis = millis();
     uint32_t last_vent_temp_millis = millis();
     adcc_channel_t pres_ox;
     adcc_channel_t temp_vent
 #endif
-    
+
     // Test the IO Expander
     pca_init();
 
-    bool blue_led_on = false;   // visual heartbeat
+    bool blue_led_on = false; // visual heartbeat
     while (1) {
         CLRWDT(); // feed the watchdog, which is set for 256ms
 
@@ -147,18 +142,18 @@ int main(int argc, char **argv) {
             seen_can_message = false;
             last_message_millis = millis();
         }
-        
-    #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
+
+#if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
         if (millis() - last_message_millis > MAX_BUS_DEAD_TIME_ms &&
             (SAFE_STATE_ENABLED || requested_actuator_state_inj == SAFE_STATE)) {
             // Only reset if safe state is enabled (aka this isn't injector valve)
             // OR this is injector valve and the currently requested state is the safe
             // state (closed)
-            
+
             // We've got too long without seeing a valid CAN message (including one of ours)
             RESET();
         }
-    #endif
+#endif
         if (millis() - last_status_millis > STATUS_TIME_DIFF_ms) {
             last_status_millis = millis();
 
@@ -170,7 +165,7 @@ int main(int argc, char **argv) {
 
             LED_heartbeat_G();
         }
-        
+
         if (millis() - last_millis > MAX_LOOP_TIME_DIFF_ms) {
 
             // check for general board status
@@ -179,52 +174,53 @@ int main(int argc, char **argv) {
             status_ok &= check_bus_current_error();
 
             // if there was an issue, a message would already have been sent out
-            if (status_ok) { send_status_ok(); }
+            if (status_ok) {
+                send_status_ok();
+            }
 
             // Set safe state if:
             // 1. We haven't heard CAN traffic in a while
             // 2. We're low on battery voltage
             // "thread safe" because main loop should never write to requested_actuator_state
-            if (SAFE_STATE_ENABLED && (
-                    (millis() - last_command_millis > MAX_CAN_IDLE_TIME_MS)
-                    || is_batt_voltage_critical())) {
-                //actuator_send_status(SAFE_STATE);
-                #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ) 
-                    actuator_set(SAFE_STATE_FILL, FILL_DUMP_PIN);  
-                    actuator_set(SAFE_STATE_INJ, INJECTOR_PIN); 
-                #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
-                    actuator_set(SAFE_STATE_VENT, VENT_VALVE_PIN);
-                #endif
-                
+            if (SAFE_STATE_ENABLED && ((millis() - last_command_millis > MAX_CAN_IDLE_TIME_MS) ||
+                                       is_batt_voltage_critical())) {
+// actuator_send_status(SAFE_STATE);
+#if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
+                actuator_set(SAFE_STATE_FILL, FILL_DUMP_PIN);
+                actuator_set(SAFE_STATE_INJ, INJECTOR_PIN);
+#elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
+                actuator_set(SAFE_STATE_VENT, VENT_VALVE_PIN);
+#endif
+
             } else {
-                #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
-                    actuator_set(requested_actuator_state_inj, INJECTOR_PIN);
-                    actuator_set(requested_actuator_state_fill, FILL_DUMP_PIN);
-                #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
-                    actuator_set(requested_actuator_state_vent, VENT_VALVE_PIN);
-                #endif
+#if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
+                actuator_set(requested_actuator_state_inj, INJECTOR_PIN);
+                actuator_set(requested_actuator_state_fill, FILL_DUMP_PIN);
+#elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
+                actuator_set(requested_actuator_state_vent, VENT_VALVE_PIN);
+#endif
             }
 
             // visual heartbeat indicator
             if (blue_led_on) {
-                //BLUE_LED_OFF();
+                // BLUE_LED_OFF();
                 blue_led_on = false;
             } else {
-                //BLUE_LED_ON();
+                // BLUE_LED_ON();
                 blue_led_on = true;
             }
 
             // update our loop counter
             last_millis = millis();
         }
-        
+
 #if PRES_TIME_DIFF_ms
         if (millis() - last_pres_low_millis > PRES_TIME_DIFF_ms) {
             last_pres_low_millis = millis();
             update_pressure_psi_low_pass(channel_ANA0);
         }
 #endif
-        
+
 #if PRES_PNEUMATICS_TIME_DIFF_ms
         if (millis() - last_pres_pneumatics_millis > PRES_PNEUMATICS_TIME_DIFF_ms) {
             last_pres_pneumatics_millis = millis();
@@ -237,68 +233,57 @@ int main(int argc, char **argv) {
             txb_enqueue(&sensor_msg);
         }
 #endif
-        
+
 #if PRES_FUEL_TIME_DIFF_ms
-        if(millis()-last_pres_fuel_millis > PRES_FUEL_TIME_DIFF_ms)
-        {
+        if (millis() - last_pres_fuel_millis > PRES_FUEL_TIME_DIFF_ms) {
             last_pres_fuel_millis = millis();
             uint16_t pressure_fuel_psi = update_pressure_psi_low_pass(pres_fuel);
             can_msg_t sensor_msg;
-            build_analog_data_msg(
-                millis(), SENSOR_PRESSURE_FUEL, pressure_fuel_psi, &sensor_msg);
+            build_analog_data_msg(millis(), SENSOR_PRESSURE_FUEL, pressure_fuel_psi, &sensor_msg);
             txb_enqueue(&sensor_msg);
         }
 #endif
 
-#if PRES_CC_TIME_DIFF_ms 
-        if(millis()-last_pres_cc_millis > PRES_CC_TIME_DIFF_ms)
-        {
+#if PRES_CC_TIME_DIFF_ms
+        if (millis() - last_pres_cc_millis > PRES_CC_TIME_DIFF_ms) {
             last_pres_cc_millis = millis();
             uint16_t pressure_cc_psi = update_pressure_psi_low_pass(pres_cc);
             can_msg_t sensor_msg;
-            build_analog_data_msg(
-                millis(), SENSOR_PRESSURE_CC, pressure_cc_psi, &sensor_msg);
-            txb_enqueue(&sensor_msg);  
+            build_analog_data_msg(millis(), SENSOR_PRESSURE_CC, pressure_cc_psi, &sensor_msg);
+            txb_enqueue(&sensor_msg);
         }
 #endif
-        
-#if HALLSENSE_FUEL_TIME_DIFF_ms 
-        if(millis()-last_hallsense_fuel_millis > HALLSENSE_FUEL_TIME_DIFF_ms)
-        {
+
+#if HALLSENSE_FUEL_TIME_DIFF_ms
+        if (millis() - last_hallsense_fuel_millis > HALLSENSE_FUEL_TIME_DIFF_ms) {
             last_hallsense_fuel_millis = millis();
             uint16_t hallsense_fuel_flux = get_hall_sensor_reading(hallsense_fuel);
             can_msg_t sensor_msg;
-            build_analog_data_msg(
-                millis(), SENSOR_HALL_FUEL_INJ, hallsense_fuel_flux, &sensor_msg);
-            txb_enqueue(&sensor_msg);  
+            build_analog_data_msg(millis(), SENSOR_HALL_FUEL_INJ, hallsense_fuel_flux, &sensor_msg);
+            txb_enqueue(&sensor_msg);
         }
 #endif
-       
-#if HALLSENSE_OX_TIME_DIFF_ms 
-        if(millis()-last_hallsense_ox_millis > HALLSENSE_OX_TIME_DIFF_ms)
-        {
+
+#if HALLSENSE_OX_TIME_DIFF_ms
+        if (millis() - last_hallsense_ox_millis > HALLSENSE_OX_TIME_DIFF_ms) {
             last_hallsense_ox_millis = millis();
             uint16_t hallsense_ox_flux = get_hall_sensor_reading(hallsense_ox);
             can_msg_t sensor_msg;
-            build_analog_data_msg(
-                millis(), SENSOR_HALL_OX_INJ, hallsense_ox_flux, &sensor_msg);
-            txb_enqueue(&sensor_msg);  
+            build_analog_data_msg(millis(), SENSOR_HALL_OX_INJ, hallsense_ox_flux, &sensor_msg);
+            txb_enqueue(&sensor_msg);
         }
 #endif
 
-#if HALLSENSE_FILL_TIME_DIFF_ms 
-        if(millis()-last_hallsense_fill_millis > HALLSENSE_FILL_TIME_DIFF_ms)
-        {
+#if HALLSENSE_FILL_TIME_DIFF_ms
+        if (millis() - last_hallsense_fill_millis > HALLSENSE_FILL_TIME_DIFF_ms) {
             last_hallsense_fill_millis = millis();
             uint16_t hallsense_fill_flux = get_hall_sensor_reading(hallsense_fill);
             can_msg_t sensor_msg;
-            build_analog_data_msg(
-                millis(), SENSOR_HALL_FILL, hallsense_fill_flux, &sensor_msg);
-            txb_enqueue(&sensor_msg);  
+            build_analog_data_msg(millis(), SENSOR_HALL_FILL, hallsense_fill_flux, &sensor_msg);
+            txb_enqueue(&sensor_msg);
         }
 #endif
 
-        
 #if VENT_TEMP_TIME_DIFF_ms
         if (millis() - last_temp_millis > VENT_TEMP_TIME_DIFF_ms) {
             last_vent_temp_millis = millis();
@@ -310,16 +295,14 @@ int main(int argc, char **argv) {
             txb_enqueue(&sensor_msg);
         }
 #endif
-        
-#if PRES_OX_TIME_DIFF_ms 
-        if(millis()-last_pres_cc_millis > PRES_OX_TIME_DIFF_ms)
-        {
+
+#if PRES_OX_TIME_DIFF_ms
+        if (millis() - last_pres_cc_millis > PRES_OX_TIME_DIFF_ms) {
             last_pres_ox_millis = millis();
             uint16_t pressure_ox_psi = update_pressure_psi_low_pass(pres_ox);
             can_msg_t sensor_msg;
-            build_analog_data_msg(
-                millis(), SENSOR_PRESSURE_OX, pressure_ox_psi, &sensor_msg);
-            txb_enqueue(&sensor_msg);  
+            build_analog_data_msg(millis(), SENSOR_PRESSURE_OX, pressure_ox_psi, &sensor_msg);
+            txb_enqueue(&sensor_msg);
         }
 #endif
         // send any queued CAN messages
@@ -357,35 +340,37 @@ static void can_msg_handler(const can_msg_t *msg) {
         return;
     }
 
-    //make able to handle multiple actuator
+    // make able to handle multiple actuator
     switch (msg_type) {
         case MSG_GENERAL_CMD:
             cmd_type = get_general_cmd_type(msg);
             if (cmd_type == BUS_DOWN_WARNING) {
-            #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
+#if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
                 requested_actuator_state_fill = SAFE_STATE_FILL;
                 requested_actuator_state_inj = SAFE_STATE_INJ;
-            #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
-                requested_actuator_state_vent=SAFE_STATE_VENT;
-            #endif
+#elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
+                requested_actuator_state_vent = SAFE_STATE_VENT;
+#endif
             }
             break;
-            
-        //Make it handle multiple actuator    
+
+        // Make it handle multiple actuator
         case MSG_ACTUATOR_CMD:
             // see message_types.h for message format
             if (get_actuator_id(msg) == ACTUATOR_ID) {
                 // vent position will be updated synchronously
-                
-                #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
-                    if(get_actuator_id(msg) == ACTUATOR_INJECTOR_VALVE)
-                        requested_actuator_state_inj=get_req_actuator_state(msg);
-                    else if(get_actuator_id(msg) == ACTUATOR_FILL_DUMP_VALVE)
-                        requested_actuator_state_fill=get_req_actuator_state(msg);
-                #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
-                        if(get_actuator_id(msg) == ACTUATOR_VENT_VALVE)
-                        requested_actuator_state_vent = get_req_actuator_state(msg);
-                #endif
+
+#if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
+                if (get_actuator_id(msg) == ACTUATOR_INJECTOR_VALVE) {
+                    requested_actuator_state_inj = get_req_actuator_state(msg);
+                } else if (get_actuator_id(msg) == ACTUATOR_FILL_DUMP_VALVE) {
+                    requested_actuator_state_fill = get_req_actuator_state(msg);
+                }
+#elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
+                if (get_actuator_id(msg) == ACTUATOR_VENT_VALVE) {
+                    requested_actuator_state_vent = get_req_actuator_state(msg);
+                }
+#endif
                 // keep track of heartbeat here
                 seen_can_command = true;
             }
@@ -410,7 +395,7 @@ static void can_msg_handler(const can_msg_t *msg) {
                 RESET();
             }
             break;
-            
+
         // all the other ones - do nothing
         default:
             break;

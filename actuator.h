@@ -1,13 +1,11 @@
 #ifndef ACTUATOR_H
-#define	ACTUATOR_H
+#define ACTUATOR_H
 
-
-#include <stdbool.h>
 #include "canlib/message_types.h"
+#include <stdbool.h>
 
 #define ACTUACTOR_ID 0
 #define SAFE_STATE ACTUATOR_OFF
-
 
 void actuator_init();
 
