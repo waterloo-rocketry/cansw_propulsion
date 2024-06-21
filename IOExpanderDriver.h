@@ -10,7 +10,7 @@
 #include <stdint.h>
 
 void pca_init();
-void set_output(uint8_t states);
-uint8_t get_output();
+void pca_set_output(uint8_t states);
+uint8_t pca_get_output();
 
 #endif /* IOEXPANDERDRIVER_H */

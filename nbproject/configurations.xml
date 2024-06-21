@@ -25,6 +25,7 @@
       <itemPath>sensor_general.h</itemPath>
       <itemPath>../cansw_actuator/actuator.h</itemPath>
       <itemPath>../cansw_actuator/board.h</itemPath>
+      <itemPath>IOExpanderDriver.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -81,8 +82,7 @@
     </logicalFolder>
   </logicalFolder>
   <sourceRootList>
-    <Elem>canlib</Elem>
-    <Elem>rocketlib/pic18f26k83</Elem>
+    <Elem>.</Elem>
   </sourceRootList>
   <projectmakefile>Makefile</projectmakefile>
   <confs>
