@@ -10,7 +10,6 @@
 #include <stdint.h>
 
 void pca_init();
-void pca_set_polarity(uint8_t polarity);
 void pca_set_output(uint8_t states);
 uint8_t pca_get_output();
 

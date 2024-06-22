@@ -4,11 +4,7 @@
 #include "canlib/message_types.h"
 #include <stdbool.h>
 
-#define ACTUACTOR_ID 0
-#define SAFE_STATE ACTUATOR_OFF
-
 void actuator_init(uint8_t polarity);
-
 void actuator_set(enum ACTUATOR_STATE state, uint8_t pin_num);
 
 #endif /*ACTUATOR_H*/

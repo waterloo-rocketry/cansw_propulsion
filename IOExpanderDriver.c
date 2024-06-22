@@ -19,10 +19,6 @@ void pca_init() {
     i2c_write_reg8(PCA_ADDRESS, CONFIGURATION, OUTPUT);
 }
 
-void pca_set_polarity(uint8_t polarity) {
-    i2c_write_reg8(PCA_ADDRESS, POLARITY_REG, polarity);
-}
-
 void pca_set_output(uint8_t states) {
     i2c_write_reg8(PCA_ADDRESS, 1, states);
 }

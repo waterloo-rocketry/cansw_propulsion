@@ -46,9 +46,10 @@ adcc_channel_t hallsense_fuel = channel_ANB2;
 adcc_channel_t hallsense_ox = channel_ANB1;
 
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
-#define SAFE_STATE_VENT 1
+#define SAFE_STATE_VENT ACTUATOR_ON
 #define VENT_VALVE_PIN 0
-#define VENT_TEMP_TIME_DIFF_ms 0
+#define VENT_TEMP_TIME_DIFF_ms 250 // 4 Hz
+#define PRES_OX_TIME_DIFF_ms 250 // 4 Hz
 
 adcc_channel_t pres_ox = channel_ANB5;
 adcc_channel_t temp_vent = channel_ANB4;
@@ -112,7 +113,7 @@ int main(int argc, char **argv) {
 
     // Set up actuator, set polarity
     pca_init();
-    actuator_init(0);
+    actuator_init(1);
     /*
       Vent Valve: 0 to open, 1 to close (invert)
       Injector or FillDump: 0 to close, 1 to open
@@ -132,9 +133,7 @@ int main(int argc, char **argv) {
     uint32_t last_pres_cc_millis = millis();
     uint32_t last_hallsense_fuel_millis = millis();
     uint32_t last_hallsense_ox_millis = millis();
-#endif
-
-#if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
+#elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
     uint32_t last_pres_ox_millis = millis();
     uint32_t last_vent_temp_millis = millis();
 #endif
@@ -153,13 +152,17 @@ int main(int argc, char **argv) {
         }
 
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
-        if (millis() - last_message_millis > MAX_BUS_DEAD_TIME_ms &&
-            (SAFE_STATE_ENABLED || requested_actuator_state_inj == SAFE_STATE)) {
+        if (((millis() - last_message_millis) > MAX_BUS_DEAD_TIME_ms) &&
+            (requested_actuator_state_inj == SAFE_STATE)) {
             // Only reset if safe state is enabled (aka this isn't injector valve)
             // OR this is injector valve and the currently requested state is the safe
             // state (closed)
 
             // We've got too long without seeing a valid CAN message (including one of ours)
+            RESET();
+        }
+#elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
+        if ((millis() - last_message_millis) > MAX_BUS_DEAD_TIME_ms) {
             RESET();
         }
 #endif
@@ -288,7 +291,7 @@ int main(int argc, char **argv) {
 #endif
 
 #if VENT_TEMP_TIME_DIFF_ms
-        if (millis() - last_temp_millis > VENT_TEMP_TIME_DIFF_ms) {
+        if (millis() - last_vent_temp_millis > VENT_TEMP_TIME_DIFF_ms) {
             last_vent_temp_millis = millis();
 
             uint16_t temperature_c = get_temperature_c(temp_vent);
@@ -300,7 +303,7 @@ int main(int argc, char **argv) {
 #endif
 
 #if PRES_OX_TIME_DIFF_ms
-        if (millis() - last_pres_cc_millis > PRES_OX_TIME_DIFF_ms) {
+        if (millis() - last_pres_ox_millis > PRES_OX_TIME_DIFF_ms) {
             last_pres_ox_millis = millis();
             uint16_t pressure_ox_psi = update_pressure_psi_low_pass(pres_ox);
             can_msg_t sensor_msg;
