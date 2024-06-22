@@ -69,8 +69,7 @@ bool is_batt_voltage_critical(void) {
 }
 
 bool check_bus_current_error(adcc_channel_t current_channel) {
-    // ADC is using FVR of 1.024V
-    adc_result_t sense_raw_mV = ADCC_GetSingleConversion(current_channel) / 4; // FIXME ADC Channel
+    adc_result_t sense_raw_mV = ADCC_GetSingleConversion(current_channel);
     int curr_draw_mA = (sense_raw_mV) / 20;
 
     if (curr_draw_mA > OVERCURRENT_THRESHOLD_mA) {

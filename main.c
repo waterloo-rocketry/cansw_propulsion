@@ -26,20 +26,23 @@
 
 // ADD more actuator ID's if propulsion wants more stuff
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
+
 #define SAFE_STATE_FILL 1
 #define SAFE_STATE_INJ 1
+
 #define FILL_DUMP_PIN 1
 #define INJECTOR_PIN 2
-#define PRES_PNEUMATICS_TIME_DIFF_ms 500 // 2 Hz
-#define PRES_FUEL_TIME_DIFF_ms 500
-#define PRES_CC_TIME_DIFF_ms 500
-#define HALLSENSE_FUEL_TIME_DIFF_ms 500 // 2 Hz
-#define HALLSENSE_OX_TIME_DIFF_ms 500 // 2 Hz
-#define HALLSENSE_FILL_TIME_DIFF_ms 500 // 2 Hz
+
+#define PRES_PNEUMATICS_TIME_DIFF_ms 100 // 10 Hz
+#define PRES_FUEL_TIME_DIFF_ms 100 // 10 Hz
+#define PRES_CC_TIME_DIFF_ms 100 // 10 Hz
+#define HALLSENSE_FUEL_TIME_DIFF_ms 100 // 10 Hz
+#define HALLSENSE_OX_TIME_DIFF_ms 100 // 10 Hz
+#define HALLSENSE_FILL_TIME_DIFF_ms 100 // 10 Hz
 
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
 #define SAFE_STATE_VENT 1
-#define VENT_VALVE_PIN 2
+#define VENT_VALVE_PIN 0
 #define VENT_TEMP_TIME_DIFF_ms 0
 
 #else
@@ -99,10 +102,14 @@ int main(int argc, char **argv) {
 
     i2c_init(0);
 
-    // Set up actuator
-    actuator_init(0); // FIXME
+    // Set up actuator, set polarity
+    actuator_init(1);
+	/*
+	  Vent Valve: 0 to open, 1 to close (invert)
+	  Injector or FillDump: 0 to close, 1 to open
+	*/
 
-    uint32_t last_message_millis = 0; // last time we saw a can message
+    uint32_t last_message_millis = 0; // last time we saw a can message // FIXME reset
     // loop timers
     uint32_t last_status_millis = millis();
     uint32_t last_pres_low_millis = millis();
@@ -116,7 +123,7 @@ int main(int argc, char **argv) {
     uint32_t last_hallsense_fuel_millis = millis();
     uint32_t last_hallsense_ox_millis = millis();
     uint32_t last_hallsense_fill_millis = millis();
-    adcc_channel_t pres_fuel;
+    adcc_channel_t pres_fuel = channel_ANB1;
     adcc_channel_t pres_pneumatics;
     adcc_channel_t pres_cc;
     adcc_channel_t hallsense_fuel;
