@@ -23,9 +23,9 @@
       </logicalFolder>
       <itemPath>error_checks.h</itemPath>
       <itemPath>sensor_general.h</itemPath>
-      <itemPath>../cansw_actuator/actuator.h</itemPath>
       <itemPath>../cansw_actuator/board.h</itemPath>
       <itemPath>IOExpanderDriver.h</itemPath>
+      <itemPath>actuator.h</itemPath>
     </logicalFolder>
     <logicalFolder name="ExternalFiles"
                    displayName="Important Files"
@@ -127,16 +127,6 @@
         <makeCustomizationEnableLongLines>false</makeCustomizationEnableLongLines>
         <makeCustomizationNormalizeHexFile>false</makeCustomizationNormalizeHexFile>
       </makeCustomizationType>
-      <item path="../cansw_actuator/actuator.h" ex="true" overriding="false">
-        <HI-TECH-COMP>
-        </HI-TECH-COMP>
-        <HI-TECH-LINK>
-        </HI-TECH-LINK>
-        <XC8-CO>
-        </XC8-CO>
-        <XC8-config-global>
-        </XC8-config-global>
-      </item>
       <item path="../cansw_actuator/board.h" ex="true" overriding="false">
         <HI-TECH-COMP>
         </HI-TECH-COMP>

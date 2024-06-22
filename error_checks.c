@@ -14,16 +14,16 @@
 
 static bool battery_voltage_critical = false;
 
-bool check_battery_voltage_error(void) { // returns mV
-    // adc_result_t batt_raw = ADCC_GetSingleConversion(channel_VBAT);
-    adc_result_t batt_raw = 0;
+bool check_battery_voltage_error(adcc_channel_t battery_channel) { // returns mV
+    adc_result_t batt_raw = ADCC_GetSingleConversion(battery_channel);
+    //adc_result_t batt_raw = 0;
 
     // Vref: 4.096V, Resolution: 12 bits -> raw ADC value is precisely in mV
     uint16_t batt_voltage_mV = (uint16_t)batt_raw;
 
     // get the un-scaled battery voltage (voltage divider)
     // we don't care too much about precision - some truncation is fine
-    batt_voltage_mV = batt_voltage_mV * 3.7;
+    batt_voltage_mV = batt_voltage_mV * 4;
 
     if (batt_voltage_mV < ACTUATOR_BATT_UNDERVOLTAGE_THRESHOLD_mV ||
         batt_voltage_mV > ACTUATOR_BATT_OVERVOLTAGE_THRESHOLD_mV) {
@@ -67,9 +67,9 @@ bool check_battery_voltage_error(void) { // returns mV
 bool is_batt_voltage_critical(void) {
     return battery_voltage_critical;
 }
-bool check_bus_current_error(void) {
+bool check_bus_current_error(adcc_channel_t current_channel) {
     // ADC is using FVR of 1.024V
-    adc_result_t sense_raw_mV = ADCC_GetSingleConversion(channel_ANA0) / 4; // FIXME ADC Channel
+    adc_result_t sense_raw_mV = ADCC_GetSingleConversion(current_channel) / 4; // FIXME ADC Channel
     int curr_draw_mA = (sense_raw_mV) / 20;
 
     if (curr_draw_mA > OVERCURRENT_THRESHOLD_mA) {
