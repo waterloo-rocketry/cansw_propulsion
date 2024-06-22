@@ -12,7 +12,7 @@ static uint8_t actuator_states;
 #define PCA_ADDRESS 0x41
 #define POLARITY_REG 0x02
 void actuator_init(uint8_t polarity) {
-    i2c_write_reg8(PCA_ADDRESS, POLARITY_REG, polarity);
+    // i2c_write_reg8(PCA_ADDRESS, POLARITY_REG, polarity); FIXME
     actuator_states = pca_get_output();
 }
 

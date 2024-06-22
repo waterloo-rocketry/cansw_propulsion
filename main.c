@@ -100,7 +100,7 @@ int main(int argc, char **argv) {
     i2c_init(0);
 
     // Set up actuator
-    actuator_init();
+    actuator_init(0); // FIXME
 
     uint32_t last_message_millis = 0; // last time we saw a can message
     // loop timers
@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
     uint32_t last_pres_ox_millis = millis();
     uint32_t last_vent_temp_millis = millis();
     adcc_channel_t pres_ox;
-    adcc_channel_t temp_vent
+    adcc_channel_t temp_vent;
 #endif
 
     // Test the IO Expander
@@ -158,7 +158,7 @@ int main(int argc, char **argv) {
             last_status_millis = millis();
 
             bool status_ok = true;
-            status_ok &= check_bus_current_error();
+            status_ok &= check_bus_current_error(channel_ANA0); // FIXME
             if (status_ok) {
                 send_status_ok();
             }
@@ -170,8 +170,8 @@ int main(int argc, char **argv) {
 
             // check for general board status
             bool status_ok = true;
-            status_ok &= check_battery_voltage_error();
-            status_ok &= check_bus_current_error();
+            status_ok &= check_battery_voltage_error(channel_ANC2);
+            status_ok &= check_bus_current_error(channel_ANA0); // FIXME assumption
 
             // if there was an issue, a message would already have been sent out
             if (status_ok) {
@@ -182,8 +182,12 @@ int main(int argc, char **argv) {
             // 1. We haven't heard CAN traffic in a while
             // 2. We're low on battery voltage
             // "thread safe" because main loop should never write to requested_actuator_state
+#ifdef JASON
+            if (SAFE_STATE_ENABLED && (millis() - last_command_millis > MAX_CAN_IDLE_TIME_MS)) {
+#else
             if (SAFE_STATE_ENABLED && ((millis() - last_command_millis > MAX_CAN_IDLE_TIME_MS) ||
                                        is_batt_voltage_critical())) {
+#endif
 // actuator_send_status(SAFE_STATE);
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
                 actuator_set(SAFE_STATE_FILL, FILL_DUMP_PIN);
@@ -315,8 +319,6 @@ int main(int argc, char **argv) {
     return (EXIT_SUCCESS);
 }
 
-#define ACTUATOR_ID 2
-
 static void __interrupt() interrupt_handler() {
     if (PIR5) {
         can_handle_interrupt();
@@ -357,23 +359,21 @@ static void can_msg_handler(const can_msg_t *msg) {
         // Make it handle multiple actuator
         case MSG_ACTUATOR_CMD:
             // see message_types.h for message format
-            if (get_actuator_id(msg) == ACTUATOR_ID) {
-                // vent position will be updated synchronously
+            // vent position will be updated synchronously
 
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
-                if (get_actuator_id(msg) == ACTUATOR_INJECTOR_VALVE) {
-                    requested_actuator_state_inj = get_req_actuator_state(msg);
-                } else if (get_actuator_id(msg) == ACTUATOR_FILL_DUMP_VALVE) {
-                    requested_actuator_state_fill = get_req_actuator_state(msg);
-                }
-#elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
-                if (get_actuator_id(msg) == ACTUATOR_VENT_VALVE) {
-                    requested_actuator_state_vent = get_req_actuator_state(msg);
-                }
-#endif
-                // keep track of heartbeat here
-                seen_can_command = true;
+            if (get_actuator_id(msg) == ACTUATOR_INJECTOR_VALVE) {
+                requested_actuator_state_inj = get_req_actuator_state(msg);
+            } else if (get_actuator_id(msg) == ACTUATOR_FILL_DUMP_VALVE) {
+                requested_actuator_state_fill = get_req_actuator_state(msg);
             }
+#elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
+            if (get_actuator_id(msg) == ACTUATOR_VENT_VALVE) {
+                requested_actuator_state_vent = get_req_actuator_state(msg);
+            }
+#endif
+            // keep track of heartbeat here
+            seen_can_command = true;
 
             break;
 

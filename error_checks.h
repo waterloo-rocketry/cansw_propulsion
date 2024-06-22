@@ -18,10 +18,7 @@
 #define OVERCURRENT_THRESHOLD_mA 50
 
 // General board status checkers
-bool check_battery_voltage_error(void);
-bool is_batt_voltage_critical(void);
-
-// General board status checkers
-bool check_bus_current_error(void);
+bool check_battery_voltage_error(adcc_channel_t battery_channel);
+bool check_bus_current_error(adcc_channel_t current_channel);
 
 #endif /* ERROR_CHECKS_H */

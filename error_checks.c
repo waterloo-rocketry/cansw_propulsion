@@ -67,6 +67,7 @@ bool check_battery_voltage_error(adcc_channel_t battery_channel) { // returns mV
 bool is_batt_voltage_critical(void) {
     return battery_voltage_critical;
 }
+
 bool check_bus_current_error(adcc_channel_t current_channel) {
     // ADC is using FVR of 1.024V
     adc_result_t sense_raw_mV = ADCC_GetSingleConversion(current_channel) / 4; // FIXME ADC Channel
