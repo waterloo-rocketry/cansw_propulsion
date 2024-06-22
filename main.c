@@ -33,17 +33,25 @@
 #define FILL_DUMP_PIN 1
 #define INJECTOR_PIN 2
 
-#define PRES_PNEUMATICS_TIME_DIFF_ms 100 // 10 Hz
-#define PRES_FUEL_TIME_DIFF_ms 100 // 10 Hz
-#define PRES_CC_TIME_DIFF_ms 100 // 10 Hz
-#define HALLSENSE_FUEL_TIME_DIFF_ms 100 // 10 Hz
-#define HALLSENSE_OX_TIME_DIFF_ms 100 // 10 Hz
-#define HALLSENSE_FILL_TIME_DIFF_ms 100 // 10 Hz
+#define PRES_PNEUMATICS_TIME_DIFF_ms 250 // 4 Hz
+#define PRES_FUEL_TIME_DIFF_ms 250 // 4 Hz
+#define PRES_CC_TIME_DIFF_ms 250 // 4 Hz
+#define HALLSENSE_FUEL_TIME_DIFF_ms 250 // 4 Hz
+#define HALLSENSE_OX_TIME_DIFF_ms 250 // 4 Hz
+
+adcc_channel_t pres_fuel = channel_ANB5;
+adcc_channel_t pres_pneumatics = channel_ANB4;
+adcc_channel_t pres_cc = channel_ANB3;
+adcc_channel_t hallsense_fuel = channel_ANB2;
+adcc_channel_t hallsense_ox = channel_ANB1;
 
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
 #define SAFE_STATE_VENT 1
 #define VENT_VALVE_PIN 0
 #define VENT_TEMP_TIME_DIFF_ms 0
+
+adcc_channel_t pres_ox = channel_ANB5;
+adcc_channel_t temp_vent = channel_ANB4;
 
 #else
 #error "INVALID_BOARD_UNIQUE_ID"
@@ -104,10 +112,10 @@ int main(int argc, char **argv) {
 
     // Set up actuator, set polarity
     actuator_init(1);
-	/*
-	  Vent Valve: 0 to open, 1 to close (invert)
-	  Injector or FillDump: 0 to close, 1 to open
-	*/
+    /*
+      Vent Valve: 0 to open, 1 to close (invert)
+      Injector or FillDump: 0 to close, 1 to open
+    */
 
     uint32_t last_message_millis = 0; // last time we saw a can message // FIXME reset
     // loop timers
@@ -116,26 +124,18 @@ int main(int argc, char **argv) {
 
     uint32_t last_millis = millis();
     uint32_t last_command_millis = millis();
+
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
     uint32_t last_pres_fuel_millis = millis();
     uint32_t last_pres_pneumatics_millis = millis();
     uint32_t last_pres_cc_millis = millis();
     uint32_t last_hallsense_fuel_millis = millis();
     uint32_t last_hallsense_ox_millis = millis();
-    uint32_t last_hallsense_fill_millis = millis();
-    adcc_channel_t pres_fuel = channel_ANB1;
-    adcc_channel_t pres_pneumatics;
-    adcc_channel_t pres_cc;
-    adcc_channel_t hallsense_fuel;
-    adcc_channel_t hallsense_ox;
-    adcc_channel_t hallsense_fill;
 #endif
 
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
     uint32_t last_pres_ox_millis = millis();
     uint32_t last_vent_temp_millis = millis();
-    adcc_channel_t pres_ox;
-    adcc_channel_t temp_vent;
 #endif
 
     // Test the IO Expander
@@ -149,7 +149,7 @@ int main(int argc, char **argv) {
             seen_can_message = false;
             last_message_millis = millis();
         }
-		if (seen_can_command) {
+        if (seen_can_command) {
             seen_can_command = false;
             last_command_millis = millis();
         }
@@ -285,16 +285,6 @@ int main(int argc, char **argv) {
             uint16_t hallsense_ox_flux = get_hall_sensor_reading(hallsense_ox);
             can_msg_t sensor_msg;
             build_analog_data_msg(millis(), SENSOR_HALL_OX_INJ, hallsense_ox_flux, &sensor_msg);
-            txb_enqueue(&sensor_msg);
-        }
-#endif
-
-#if HALLSENSE_FILL_TIME_DIFF_ms
-        if (millis() - last_hallsense_fill_millis > HALLSENSE_FILL_TIME_DIFF_ms) {
-            last_hallsense_fill_millis = millis();
-            uint16_t hallsense_fill_flux = get_hall_sensor_reading(hallsense_fill);
-            can_msg_t sensor_msg;
-            build_analog_data_msg(millis(), SENSOR_HALL_FILL, hallsense_fill_flux, &sensor_msg);
             txb_enqueue(&sensor_msg);
         }
 #endif
