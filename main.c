@@ -14,7 +14,7 @@
 
 #include <xc.h>
 
-#define MAX_BUS_DEAD_TIME_ms 1000
+#define MAX_BUS_DEAD_TIME_ms 1000 // Unused
 
 // Set any of these to zero to disable
 #define STATUS_TIME_DIFF_ms 500 // 2 Hz
@@ -30,8 +30,8 @@
 #define SAFE_STATE_FILL 1
 #define SAFE_STATE_INJ 1
 
-#define FILL_DUMP_PIN 1
-#define INJECTOR_PIN 2
+#define FILL_DUMP_PIN 0
+#define INJECTOR_PIN 1
 
 #define PRES_PNEUMATICS_TIME_DIFF_ms 250 // 4 Hz
 #define PRES_FUEL_TIME_DIFF_ms 250 // 4 Hz
@@ -111,7 +111,8 @@ int main(int argc, char **argv) {
     i2c_init(0);
 
     // Set up actuator, set polarity
-    actuator_init(1);
+    pca_init();
+    actuator_init(0);
     /*
       Vent Valve: 0 to open, 1 to close (invert)
       Injector or FillDump: 0 to close, 1 to open
@@ -137,9 +138,6 @@ int main(int argc, char **argv) {
     uint32_t last_pres_ox_millis = millis();
     uint32_t last_vent_temp_millis = millis();
 #endif
-
-    // Test the IO Expander
-    pca_init();
 
     bool blue_led_on = false; // visual heartbeat
     while (1) {
@@ -199,7 +197,7 @@ int main(int argc, char **argv) {
             if (SAFE_STATE_ENABLED && ((millis() - last_command_millis > MAX_CAN_IDLE_TIME_MS) ||
                                        is_batt_voltage_critical())) {
 #endif
-// actuator_send_status(SAFE_STATE);
+
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
                 actuator_set(SAFE_STATE_FILL, FILL_DUMP_PIN);
                 actuator_set(SAFE_STATE_INJ, INJECTOR_PIN);

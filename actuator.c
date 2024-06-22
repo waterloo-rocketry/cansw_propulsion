@@ -6,10 +6,10 @@
 #include "actuator.h"
 #include "canlib/canlib.h"
 
-static uint8_t actuator_states;
+uint8_t actuator_states = 0;
 
 void actuator_init(uint8_t polarity) {
-    pca_set_polarity(polarity);
+    // pca_set_polarity(polarity); // FIXME
     actuator_states = pca_get_output();
 }
 
