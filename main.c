@@ -39,7 +39,7 @@
 
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
 #define SAFE_STATE_VENT 1
-#define VENT_VALVE_PIN 1
+#define VENT_VALVE_PIN 2
 #define VENT_TEMP_TIME_DIFF_ms 0
 
 #else
@@ -141,6 +141,10 @@ int main(int argc, char **argv) {
         if (seen_can_message) {
             seen_can_message = false;
             last_message_millis = millis();
+        }
+		if (seen_can_command) {
+            seen_can_command = false;
+            last_command_millis = millis();
         }
 
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
