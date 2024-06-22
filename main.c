@@ -20,18 +20,18 @@
 #define STATUS_TIME_DIFF_ms 500 // 2 Hz
 
 #define MAX_LOOP_TIME_DIFF_ms 20
-#define MAX_CAN_IDLE_TIME_MS 1000
+#define MAX_CAN_IDLE_TIME_MS 2000
 
 #define SAFE_STATE_ENABLED 1
 
 // ADD more actuator ID's if propulsion wants more stuff
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
 
-#define SAFE_STATE_FILL 1
-#define SAFE_STATE_INJ 1
+#define SAFE_STATE_FILL ACTUATOR_ON
+#define SAFE_STATE_INJ ACTUATOR_OFF
 
-#define FILL_DUMP_PIN 0
-#define INJECTOR_PIN 1
+#define FILL_DUMP_PIN 1
+#define INJECTOR_PIN 0
 
 #define PRES_PNEUMATICS_TIME_DIFF_ms 250 // 4 Hz
 #define PRES_FUEL_TIME_DIFF_ms 250 // 4 Hz
@@ -113,10 +113,15 @@ int main(int argc, char **argv) {
 
     // Set up actuator, set polarity
     pca_init();
+#if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
+    actuator_init(1 << FILL_DUMP_PIN); // only fill dump is inverted
+#elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
     actuator_init(1);
+#endif
+
     /*
-      Vent Valve: 0 to open, 1 to close (invert)
-      Injector or FillDump: 0 to close, 1 to open
+      Vent and Fill Dump: 0 to open, 1 to close (invert)
+      Injector: 0 to close, 1 to open
     */
 
     uint32_t last_message_millis = 0; // last time we saw a can message // FIXME reset
@@ -153,7 +158,7 @@ int main(int argc, char **argv) {
 
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
         if (((millis() - last_message_millis) > MAX_BUS_DEAD_TIME_ms) &&
-            (requested_actuator_state_inj == SAFE_STATE)) {
+            (requested_actuator_state_inj == SAFE_STATE_INJ)) {
             // Only reset if safe state is enabled (aka this isn't injector valve)
             // OR this is injector valve and the currently requested state is the safe
             // state (closed)
@@ -203,7 +208,7 @@ int main(int argc, char **argv) {
 
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
                 actuator_set(SAFE_STATE_FILL, FILL_DUMP_PIN);
-                actuator_set(SAFE_STATE_INJ, INJECTOR_PIN);
+                // Injector does not have electrical safe state, just keep state
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
                 actuator_set(SAFE_STATE_VENT, VENT_VALVE_PIN);
 #endif
