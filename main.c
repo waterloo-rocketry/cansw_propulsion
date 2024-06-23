@@ -19,8 +19,8 @@
 // Set any of these to zero to disable
 #define STATUS_TIME_DIFF_ms 500 // 2 Hz
 
-#define MAX_LOOP_TIME_DIFF_ms 20
-#define MAX_CAN_IDLE_TIME_MS 2000
+#define MAX_LOOP_TIME_DIFF_ms 20 // 50 Hz
+#define MAX_CAN_IDLE_TIME_MS 2000 
 
 #define SAFE_STATE_ENABLED 1
 
@@ -44,6 +44,8 @@ adcc_channel_t pres_pneumatics = channel_ANB4;
 adcc_channel_t pres_cc = channel_ANB3;
 adcc_channel_t hallsense_fuel = channel_ANB2;
 adcc_channel_t hallsense_ox = channel_ANB1;
+adcc_channel_t current_sense = channel_ANA0; //FIX ME Verify Channel
+adcc_channel_t batt_vol_sense = channel_ANC2;
 
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
 #define SAFE_STATE_VENT ACTUATOR_ON
@@ -175,7 +177,7 @@ int main(int argc, char **argv) {
             last_status_millis = millis();
 
             bool status_ok = true;
-            status_ok &= check_bus_current_error(channel_ANA0); // FIXME
+            status_ok &= check_bus_current_error(current_sense);
             if (status_ok) {
                 send_status_ok();
             }
@@ -187,8 +189,8 @@ int main(int argc, char **argv) {
 
             // check for general board status
             bool status_ok = true;
-            status_ok &= check_battery_voltage_error(channel_ANC2);
-            status_ok &= check_bus_current_error(channel_ANA0); // FIXME assumption
+            status_ok &= check_battery_voltage_error(batt_vol_sense);
+            status_ok &= check_bus_current_error(current_sense); 
 
             // if there was an issue, a message would already have been sent out
             if (status_ok) {
@@ -238,7 +240,7 @@ int main(int argc, char **argv) {
 #if PRES_TIME_DIFF_ms
         if (millis() - last_pres_low_millis > PRES_TIME_DIFF_ms) {
             last_pres_low_millis = millis();
-            update_pressure_psi_low_pass(channel_ANA0);
+            update_pressure_psi_low_pass(channel_ANA0); //FIX ME (is this channel set?)
         }
 #endif
 
