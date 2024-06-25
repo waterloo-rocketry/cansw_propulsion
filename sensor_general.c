@@ -56,8 +56,8 @@ void LED_heartbeat_R(void) {
 }
 
 // 4-20mA pressure transducer
-uint32_t get_pressure_4_20_psi(void) {
-    adc_result_t voltage_raw = ADCC_GetSingleConversion(channel_ANA0);
+uint32_t get_pressure_4_20_psi(adcc_channel_t adc_channel) {
+    adc_result_t voltage_raw = ADCC_GetSingleConversion(adc_channel);
 
     float v = (voltage_raw + 0.5f) / 4096.0f * VREF;
 
@@ -71,8 +71,8 @@ uint32_t get_pressure_4_20_psi(void) {
     return (uint32_t)pressure_psi + PT_OFFSET;
 }
 
-uint32_t get_pressure_pneumatic_psi(void) {
-    adc_result_t voltage_raw = ADCC_GetSingleConversion(channel_ANA0);
+uint32_t get_pressure_pneumatic_psi(adcc_channel_t adc_channel) {
+    adc_result_t voltage_raw = ADCC_GetSingleConversion(adc_channel);
 
     float v = ((voltage_raw + 0.5f) / 4096.0f * VREF) * 2; // 10kohm and 10kohm resistor divider
 
@@ -93,17 +93,17 @@ uint32_t get_pressure_pneumatic_psi(void) {
 double alpha_low = LOW_PASS_ALPHA(LOW_PASS_RESPONSE_TIME);
 double low_pass_pressure_psi = 0;
 
-uint16_t update_pressure_psi_low_pass(void) {
+uint16_t update_pressure_psi_low_pass(adcc_channel_t adc_channel) {
 
-    int16_t pressure_psi = get_pressure_4_20_psi();
+    int16_t pressure_psi = get_pressure_4_20_psi(adc_channel);
 
     low_pass_pressure_psi = alpha_low * low_pass_pressure_psi + (1.0 - alpha_low) * pressure_psi;
     return (uint16_t)low_pass_pressure_psi;
 }
 
 // 10kR thermistor
-uint16_t get_temperature_c(void) {
-    adc_result_t voltage_raw = ADCC_GetSingleConversion(channel_ANA0);
+uint16_t get_temperature_c(adcc_channel_t adc_channel) {
+    adc_result_t voltage_raw = ADCC_GetSingleConversion(adc_channel);
     const float rdiv = 10000.0; // 10kohm divider resistor
 
     // beta, r0, t0 from
@@ -119,4 +119,8 @@ uint16_t get_temperature_c(void) {
     float invk = 1 / t0 + 1 / beta * log(r / r0);
 
     return (uint16_t)(1 / invk - 273);
+}
+
+uint16_t get_hall_sensor_reading(adcc_channel_t adc_channel) {
+    return ADCC_GetSingleConversion(adc_channel);
 }

@@ -5,7 +5,7 @@
 #include "mcc_generated_files/system/system.h"
 
 #include "error_checks.h"
-#include "board.h"
+// #include "board.h"
 #include "actuator.h"
 
 //******************************************************************************
@@ -14,26 +14,27 @@
 
 static bool battery_voltage_critical = false;
 
-bool check_battery_voltage_error(void){    //returns mV
-    adc_result_t batt_raw = ADCC_GetSingleConversion(channel_VBAT);
+bool check_battery_voltage_error(adcc_channel_t battery_channel) { // returns mV
+    adc_result_t batt_raw = ADCC_GetSingleConversion(battery_channel);
+    //adc_result_t batt_raw = 0;
 
     // Vref: 4.096V, Resolution: 12 bits -> raw ADC value is precisely in mV
     uint16_t batt_voltage_mV = (uint16_t)batt_raw;
 
     // get the un-scaled battery voltage (voltage divider)
     // we don't care too much about precision - some truncation is fine
-    batt_voltage_mV = batt_voltage_mV * 3.7;
+    batt_voltage_mV = batt_voltage_mV * 4;
 
-    if (batt_voltage_mV < ACTUATOR_BATT_UNDERVOLTAGE_THRESHOLD_mV
-            || batt_voltage_mV > ACTUATOR_BATT_OVERVOLTAGE_THRESHOLD_mV) {
+    if (batt_voltage_mV < ACTUATOR_BATT_UNDERVOLTAGE_THRESHOLD_mV ||
+        batt_voltage_mV > ACTUATOR_BATT_OVERVOLTAGE_THRESHOLD_mV) {
 
         uint32_t timestamp = millis();
         uint8_t batt_data[2] = {0};
         batt_data[0] = (batt_voltage_mV >> 8) & 0xff;
         batt_data[1] = (batt_voltage_mV >> 0) & 0xff;
         enum BOARD_STATUS error_code = batt_voltage_mV < ACTUATOR_BATT_UNDERVOLTAGE_THRESHOLD_mV
-                ? E_BATT_UNDER_VOLTAGE
-                : E_BATT_OVER_VOLTAGE;
+                                           ? E_BATT_UNDER_VOLTAGE
+                                           : E_BATT_OVER_VOLTAGE;
 
         can_msg_t error_msg;
         build_board_stat_msg(timestamp, error_code, batt_data, 2, &error_msg);
@@ -67,27 +68,8 @@ bool is_batt_voltage_critical(void) {
     return battery_voltage_critical;
 }
 
-bool check_actuator_pin_error(enum ACTUATOR_STATE req_state) {
-    enum ACTUATOR_STATE cur_state = get_actuator_state();
-    bool valid = true;
-    if (cur_state == ACTUATOR_ILLEGAL) { valid = false; }
-
-    if (!valid) {
-        uint8_t state_data[2] = {0};
-        state_data[0] = req_state;
-        state_data[1] = cur_state;
-        can_msg_t error_msg;
-        build_board_stat_msg(millis(), E_ACTUATOR_STATE, state_data, 2, &error_msg);
-        txb_enqueue(&error_msg);
-        return false;
-    }
-
-    return true;
-}
-
-bool check_bus_current_error(void){
-    // ADC is using FVR of 1.024V
-    adc_result_t sense_raw_mV = ADCC_GetSingleConversion(channel_ANA0) / 4; // FIXME ADC Channel
+bool check_bus_current_error(adcc_channel_t current_channel) {
+    adc_result_t sense_raw_mV = ADCC_GetSingleConversion(current_channel);
     int curr_draw_mA = (sense_raw_mV) / 20;
 
     if (curr_draw_mA > OVERCURRENT_THRESHOLD_mA) {
