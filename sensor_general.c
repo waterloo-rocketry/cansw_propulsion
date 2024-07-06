@@ -62,7 +62,7 @@ uint32_t get_pressure_4_20_psi(adcc_channel_t adc_channel) {
     float v = (voltage_raw + 0.5f) / 4096.0f * VREF;
 
     const double r = 100;
-    const double pressure_range = 3000;
+    const double pressure_range = 1450;
 
     double current = v / r;
 

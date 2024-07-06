@@ -36,6 +36,9 @@
 #define MAX_CAN_IDLE_TIME_MS 2000 
 
 #define SAFE_STATE_ENABLED 1
+adcc_channel_t current_sense_5v = channel_ANA0; 
+adcc_channel_t current_sense_12v = channel_ANA1; 
+adcc_channel_t batt_vol_sense = channel_ANC2;
 
 // ADD more actuator ID's if propulsion wants more stuff
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
@@ -53,15 +56,12 @@
 #define HALLSENSE_FUEL_TIME_DIFF_ms 250 // 4 Hz
 #define HALLSENSE_OX_TIME_DIFF_ms 250 // 4 Hz
 
-adcc_channel_t pres_fuel = channel_ANB2;
+adcc_channel_t pres_fuel = channel_ANB1;
 adcc_channel_t hallsense_fill = channel_ANB3;
 adcc_channel_t pres_pneumatics = channel_ANB0;
-adcc_channel_t pres_cc = channel_ANB1;
+adcc_channel_t pres_cc = channel_ANB0;
 adcc_channel_t hallsense_fuel = channel_ANB4;
 adcc_channel_t hallsense_ox = channel_ANB5;
-adcc_channel_t current_sense_5v = channel_ANA0; 
-adcc_channel_t current_sense_12v = channel_ANA1; 
-adcc_channel_t batt_vol_sense = channel_ANC2;
 
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
 #define SAFE_STATE_VENT ACTUATOR_ON
