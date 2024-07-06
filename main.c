@@ -46,8 +46,8 @@ adcc_channel_t batt_vol_sense = channel_ANC2;
 #define SAFE_STATE_FILL ACTUATOR_ON
 #define SAFE_STATE_INJ ACTUATOR_OFF
 
-#define FILL_DUMP_PIN 0 //FIX ME should be 1
-#define INJECTOR_PIN 1 //FIX ME should be 0
+#define FILL_DUMP_PIN 2 //FIX ME should be 1
+#define INJECTOR_PIN 0 
 
 #define PRES_PNEUMATICS_TIME_DIFF_ms 250 // 4 Hz
 #define PRES_FUEL_TIME_DIFF_ms 250 // 4 Hz
