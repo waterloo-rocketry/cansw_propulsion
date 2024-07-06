@@ -33,7 +33,7 @@
 #define STATUS_TIME_DIFF_ms 500 // 2 Hz
 
 #define MAX_LOOP_TIME_DIFF_ms 20 // 50 Hz
-#define MAX_CAN_IDLE_TIME_MS 2000 
+#define MAX_CAN_IDLE_TIME_MS 5000 
 
 #define SAFE_STATE_ENABLED 1
 adcc_channel_t current_sense_5v = channel_ANA0; 
@@ -65,7 +65,7 @@ adcc_channel_t hallsense_ox = channel_ANB5;
 
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
 #define SAFE_STATE_VENT ACTUATOR_ON
-#define VENT_VALVE_PIN 0
+#define VENT_VALVE_PIN 0 
 #define VENT_TEMP_TIME_DIFF_ms 250 // 4 Hz
 #define PRES_OX_TIME_DIFF_ms 250 // 4 Hz
 
