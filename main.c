@@ -33,7 +33,7 @@
 #define STATUS_TIME_DIFF_ms 500 // 2 Hz
 
 #define MAX_LOOP_TIME_DIFF_ms 20 // 50 Hz
-#define MAX_CAN_IDLE_TIME_MS 5000 
+#define MAX_CAN_IDLE_TIME_MS 2000 
 
 #define SAFE_STATE_ENABLED 1
 adcc_channel_t current_sense_5v = channel_ANA0; 
@@ -411,14 +411,14 @@ static void can_msg_handler(const can_msg_t *msg) {
                 requested_actuator_state_inj = get_req_actuator_state(msg);
             } else if (get_actuator_id(msg) == ACTUATOR_FILL_DUMP_VALVE) {
                 requested_actuator_state_fill = get_req_actuator_state(msg);
+                seen_can_command = true;
             }
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
             if (get_actuator_id(msg) == ACTUATOR_VENT_VALVE) {
                 requested_actuator_state_vent = get_req_actuator_state(msg);
+                seen_can_command = true;
             }
 #endif
-            // keep track of heartbeat here
-            seen_can_command = true;
 
             break;
 
