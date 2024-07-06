@@ -58,7 +58,7 @@ adcc_channel_t batt_vol_sense = channel_ANC2;
 
 adcc_channel_t pres_fuel = channel_ANB1;
 adcc_channel_t hallsense_fill = channel_ANB3;
-adcc_channel_t pres_pneumatics = channel_ANB0;
+adcc_channel_t pres_pneumatics = channel_ANB2;
 adcc_channel_t pres_cc = channel_ANB0;
 adcc_channel_t hallsense_fuel = channel_ANB4;
 adcc_channel_t hallsense_ox = channel_ANB5;
