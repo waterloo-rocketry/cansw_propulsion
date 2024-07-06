@@ -1,3 +1,16 @@
+/*
+ TODO:
+ * 
+ * correct low_pass pressure function, and then reinstate it  
+ * - find the original function of PRES_TIME_DIFF_ms
+ * reinstate is_batt_voltage_critical() check for safestate injection
+ * test the code for the fill hall sensor
+ * test the 12V current sense function
+ * - Measure the correct BAT_OVERCURRENT_mA value, and change it in error_checks.h
+ * double check curr_draw_mA in error_checks.c is correct
+ */
+
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -36,15 +49,18 @@
 #define PRES_PNEUMATICS_TIME_DIFF_ms 250 // 4 Hz
 #define PRES_FUEL_TIME_DIFF_ms 250 // 4 Hz
 #define PRES_CC_TIME_DIFF_ms 250 // 4 Hz
+#define HALLSENSE_FILL_TIME_DIFF_ms 250 // 4 Hz
 #define HALLSENSE_FUEL_TIME_DIFF_ms 250 // 4 Hz
 #define HALLSENSE_OX_TIME_DIFF_ms 250 // 4 Hz
 
-adcc_channel_t pres_fuel = channel_ANB5;
-adcc_channel_t pres_pneumatics = channel_ANB4;
-adcc_channel_t pres_cc = channel_ANB3;
-adcc_channel_t hallsense_fuel = channel_ANB2;
-adcc_channel_t hallsense_ox = channel_ANB1;
-adcc_channel_t current_sense = channel_ANA0; //FIX ME Verify Channel
+adcc_channel_t pres_fuel = channel_ANB2;
+adcc_channel_t hallsense_fill = channel_ANB3;
+adcc_channel_t pres_pneumatics = channel_ANB0;
+adcc_channel_t pres_cc = channel_ANB1;
+adcc_channel_t hallsense_fuel = channel_ANB4;
+adcc_channel_t hallsense_ox = channel_ANB5;
+adcc_channel_t current_sense_5v = channel_ANA0; 
+adcc_channel_t current_sense_12v = channel_ANA1; 
 adcc_channel_t batt_vol_sense = channel_ANC2;
 
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
@@ -53,8 +69,8 @@ adcc_channel_t batt_vol_sense = channel_ANC2;
 #define VENT_TEMP_TIME_DIFF_ms 250 // 4 Hz
 #define PRES_OX_TIME_DIFF_ms 250 // 4 Hz
 
-adcc_channel_t pres_ox = channel_ANB5;
-adcc_channel_t temp_vent = channel_ANB4;
+adcc_channel_t pres_ox = channel_ANB1;
+adcc_channel_t temp_vent = channel_ANB2;
 
 #else
 #error "INVALID_BOARD_UNIQUE_ID"
@@ -139,6 +155,7 @@ int main(int argc, char **argv) {
     uint32_t last_pres_pneumatics_millis = millis();
     uint32_t last_pres_cc_millis = millis();
     uint32_t last_hallsense_fuel_millis = millis();
+    uint32_t last_hallsense_fill_millis = millis();
     uint32_t last_hallsense_ox_millis = millis();
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
     uint32_t last_pres_ox_millis = millis();
@@ -177,7 +194,8 @@ int main(int argc, char **argv) {
             last_status_millis = millis();
 
             bool status_ok = true;
-            status_ok &= check_bus_current_error(current_sense);
+            status_ok &= check_5v_current_error(current_sense_5v);
+            status_ok &= check_12v_current_error(current_sense_12v);
             if (status_ok) {
                 send_status_ok();
             }
@@ -190,7 +208,9 @@ int main(int argc, char **argv) {
             // check for general board status
             bool status_ok = true;
             status_ok &= check_battery_voltage_error(batt_vol_sense);
-            status_ok &= check_bus_current_error(current_sense); 
+
+            status_ok &= check_5v_current_error(current_sense_5v); 
+            status_ok &= check_12v_current_error(current_sense_12v);
 
             // if there was an issue, a message would already have been sent out
             if (status_ok) {
@@ -237,12 +257,15 @@ int main(int argc, char **argv) {
             last_millis = millis();
         }
 
+// FIXME wtf is this. PRES_TIME_DIFF_ms is defined in the header file to be 250
+/*
 #if PRES_TIME_DIFF_ms
         if (millis() - last_pres_low_millis > PRES_TIME_DIFF_ms) {
             last_pres_low_millis = millis();
-            update_pressure_psi_low_pass(channel_ANA0); //FIX ME (is this channel set?)
+            update_pressure_psi_(channel_ANA0); //FIX ME (is this channel set?)
         }
 #endif
+*/
 
 #if PRES_PNEUMATICS_TIME_DIFF_ms
         if (millis() - last_pres_pneumatics_millis > PRES_PNEUMATICS_TIME_DIFF_ms) {
@@ -260,7 +283,9 @@ int main(int argc, char **argv) {
 #if PRES_FUEL_TIME_DIFF_ms
         if (millis() - last_pres_fuel_millis > PRES_FUEL_TIME_DIFF_ms) {
             last_pres_fuel_millis = millis();
-            uint16_t pressure_fuel_psi = update_pressure_psi_low_pass(pres_fuel);
+            // FIXME: both fuelPT and CCPT call the same low pass function, which may lead to them reading the same value
+            // uint16_t pressure_fuel_psi = update_pressure_psi_low_pass(pres_fuel); 
+            uint16_t pressure_fuel_psi = get_pressure_4_20_psi(pres_fuel);
             can_msg_t sensor_msg;
             build_analog_data_msg(millis(), SENSOR_PRESSURE_FUEL, pressure_fuel_psi, &sensor_msg);
             txb_enqueue(&sensor_msg);
@@ -270,11 +295,22 @@ int main(int argc, char **argv) {
 #if PRES_CC_TIME_DIFF_ms
         if (millis() - last_pres_cc_millis > PRES_CC_TIME_DIFF_ms) {
             last_pres_cc_millis = millis();
-            uint16_t pressure_cc_psi = update_pressure_psi_low_pass(pres_cc);
+            // uint16_t pressure_cc_psi = update_pressure_psi_low_pass(pres_cc);
+            uint16_t pressure_cc_psi = get_pressure_4_20_psi(pres_cc);
             can_msg_t sensor_msg;
             build_analog_data_msg(millis(), SENSOR_PRESSURE_CC, pressure_cc_psi, &sensor_msg);
             txb_enqueue(&sensor_msg);
         }
+#endif
+            
+#if HALLSENSE_FILL_TIME_DIFF_ms 
+            if (millis() - last_hallsense_fill_millis > HALLSENSE_FILL_TIME_DIFF_ms) {
+                last_hallsense_fill_millis = millis();
+                uint16_t hallsense_fill_flux = get_hall_sensor_reading(hallsense_fill);
+                can_msg_t sensor_msg;
+                build_analog_data_msg(millis(), SENSOR_HALL_FILL, hallsense_fill_flux, &sensor_msg);
+                txb_enqueue(&sensor_msg);
+            }
 #endif
 
 #if HALLSENSE_FUEL_TIME_DIFF_ms

@@ -74,7 +74,7 @@ uint32_t get_pressure_4_20_psi(adcc_channel_t adc_channel) {
 uint32_t get_pressure_pneumatic_psi(adcc_channel_t adc_channel) {
     adc_result_t voltage_raw = ADCC_GetSingleConversion(adc_channel);
 
-    float v = ((voltage_raw + 0.5f) / 4096.0f * VREF) * 2; // 10kohm and 10kohm resistor divider
+    float v = ((voltage_raw + 0.5f) / 4096.0f * VREF) * 2.5; // 15kohm and 10kohm resistor divider
 
     // for PSE530-R06, see "Analog Output" graph here: https://www.smcpneumatics.com/pdfs/PSE.pdf
     //  analog output[V] = ((5[V]-0.6[V])/(1[MPa] - (-0.1[MPa]))*pressure[MPa], aka y = 4x + 1
@@ -87,7 +87,7 @@ uint32_t get_pressure_pneumatic_psi(adcc_channel_t adc_channel) {
 }
 
 // Low-pass filter for 4-20mA pressure transducer
-#define SAMPLE_FREQ (1000.0 / PRES_TIME_DIFF_ms)
+#define SAMPLE_FREQ (1000.0 / PRES_TIME_DIFF_ms) // FIXME PRES_TIME_DIFF_ms is not set 
 #define LOW_PASS_ALPHA(TR) ((SAMPLE_FREQ * TR / 5.0) / (1 + SAMPLE_FREQ * TR / 5.0))
 #define LOW_PASS_RESPONSE_TIME 10.0 // seconds
 double alpha_low = LOW_PASS_ALPHA(LOW_PASS_RESPONSE_TIME);

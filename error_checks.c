@@ -8,6 +8,8 @@
 // #include "board.h"
 #include "actuator.h"
 
+const float CONVERT_FACTOR = 1e+05 / 4096.0f * 3.3; // 100 V/V multiplier * mV conversion * (raw + continuity correction) / 12bit adc * vref
+
 //******************************************************************************
 //                              STATUS CHECKS                                 //
 //******************************************************************************
@@ -68,18 +70,43 @@ bool is_batt_voltage_critical(void) {
     return battery_voltage_critical;
 }
 
-bool check_bus_current_error(adcc_channel_t current_channel) {
-    adc_result_t sense_raw_mV = ADCC_GetSingleConversion(current_channel);
-    int curr_draw_mA = (sense_raw_mV) / 20;
+bool check_5v_current_error(adcc_channel_t current_channel) { // Check bus current error
+    
+    
+    adc_result_t voltage_raw = ADCC_GetSingleConversion(current_channel); 
+    float mV = (voltage_raw + 0.5f) * CONVERT_FACTOR;
+    uint16_t curr_draw_mA = mV / 62; // 62 is R8 rating in mR
 
-    if (curr_draw_mA > OVERCURRENT_THRESHOLD_mA) {
+
+    if (curr_draw_mA > BUS_OVERCURRENT_THRESHOLD_mA) { 
+        uint32_t timestamp = millis();
+        uint8_t curr_data[2] = {0};
+        curr_data[0] = (curr_draw_mA >> 8) & 0xff; 
+        curr_data[1] = (curr_draw_mA >> 0) & 0xff;
+               
+        can_msg_t error_msg;
+        build_board_stat_msg(timestamp, E_5V_OVER_CURRENT, curr_data, 2, &error_msg);
+        txb_enqueue(&error_msg);
+        return false;
+    }
+
+    // things look ok
+    return true;
+}
+
+bool check_12v_current_error(adcc_channel_t current_channel) { // check battery current error
+    adc_result_t voltage_raw = ADCC_GetSingleConversion(current_channel);
+    float mV = (voltage_raw + 0.5f) * CONVERT_FACTOR;
+    uint16_t curr_draw_mA = mV / 15; // 15 is R7 rating in mR
+
+    if (curr_draw_mA > BAT_OVERCURRENT_THRESHOLD_mA) {
         uint32_t timestamp = millis();
         uint8_t curr_data[2] = {0};
         curr_data[0] = (curr_draw_mA >> 8) & 0xff;
         curr_data[1] = (curr_draw_mA >> 0) & 0xff;
 
         can_msg_t error_msg;
-        build_board_stat_msg(timestamp, E_5V_OVER_CURRENT, curr_data, 2, &error_msg);
+        build_board_stat_msg(timestamp, E_BATT_OVER_CURRENT, curr_data, 2, &error_msg);
         txb_enqueue(&error_msg);
         return false;
     }
