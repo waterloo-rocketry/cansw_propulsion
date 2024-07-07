@@ -28,12 +28,11 @@
 
 #include <xc.h>
 
-#define MAX_BUS_DEAD_TIME_ms 1000 // Unused
+#define MAX_BUS_DEAD_TIME_ms 1000 
 
 // Set any of these to zero to disable
 #define STATUS_TIME_DIFF_ms 500 // 2 Hz
 
-#define MAX_LOOP_TIME_DIFF_ms 200 // 5 Hz
 #define MAX_CAN_IDLE_TIME_MS 5000 
 
 #define SAFE_STATE_ENABLED 1
@@ -139,7 +138,7 @@ int main(int argc, char **argv) {
       Injector: 0 to close, 1 to open
     */
 
-    uint32_t last_message_millis = 0; // last time we saw a can message // FIXME reset
+    uint32_t last_message_millis = 0; // last time we saw a can message 
     // loop timers
     uint32_t last_status_millis = millis();
     uint32_t last_pres_low_millis = millis();
@@ -187,20 +186,7 @@ int main(int argc, char **argv) {
             RESET();
         }
 #endif
-        if (millis() - last_status_millis > STATUS_TIME_DIFF_ms) {
-            last_status_millis = millis();
-
-            bool status_ok = true;
-            status_ok &= check_5v_current_error(current_sense_5v);
-            status_ok &= check_12v_current_error(current_sense_12v);
-            if (status_ok) {
-                send_status_ok();
-            }
-
-            LED_heartbeat_G();
-        }
-
-        if (millis() - last_millis > MAX_LOOP_TIME_DIFF_ms) {
+        if (millis() - last_millis > STATUS_TIME_DIFF_ms) {
 
             // check for general board status
             bool status_ok = true;
@@ -213,7 +199,7 @@ int main(int argc, char **argv) {
             if (status_ok) {
                 send_status_ok();
             }
-
+            LED_heartbeat_G();
             // Set safe state if:
             // 1. We haven't heard CAN traffic in a while
             // 2. We're low on battery voltage
@@ -250,7 +236,6 @@ int main(int argc, char **argv) {
             last_millis = millis();
         }
 
-// FIXME wtf is this. PRES_TIME_DIFF_ms is defined in the header file to be 250
 /*
 #if PRES_TIME_DIFF_ms
         if (millis() - last_pres_low_millis > PRES_TIME_DIFF_ms) {
@@ -351,9 +336,6 @@ int main(int argc, char **argv) {
         txb_heartbeat();
     }
 
-    send_status_ok();
-
-    // unreachable
     return (EXIT_SUCCESS);
 }
 
@@ -382,18 +364,6 @@ static void can_msg_handler(const can_msg_t *msg) {
 
     // make able to handle multiple actuator
     switch (msg_type) {
-        case MSG_GENERAL_CMD:
-            cmd_type = get_general_cmd_type(msg);
-            if (cmd_type == BUS_DOWN_WARNING) {
-#if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
-                requested_actuator_state_fill = SAFE_STATE_FILL;
-                requested_actuator_state_inj = SAFE_STATE_INJ;
-#elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
-                requested_actuator_state_vent = SAFE_STATE_VENT;
-#endif
-            }
-            break;
-
         // Make it handle multiple actuator
         case MSG_ACTUATOR_CMD:
             // see message_types.h for message format
