@@ -4,7 +4,7 @@
 #include "canlib/message_types.h"
 #include <stdbool.h>
 
-void actuator_init(uint8_t polarity);
+void actuator_init();
 void actuator_set(enum ACTUATOR_STATE state, uint8_t pin_num);
 
 #endif /*ACTUATOR_H*/

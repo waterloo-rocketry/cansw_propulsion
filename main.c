@@ -6,8 +6,9 @@
  * reinstate is_batt_voltage_critical() check for safestate injection
  * test the code for the fill hall sensor
  * test the 12V current sense function
- * - Measure the correct BAT_OVERCURRENT_mA value, and change it in error_checks.h
+ * - Measure the correct BAT_OVERCURRENT_mA value, and change it in error_checks.h --> 60mA??
  * double check curr_draw_mA in error_checks.c is correct
+ * USBdbg problem where actuators are locked in safe state after can lines recover from short 
  */
 
 
@@ -32,8 +33,8 @@
 // Set any of these to zero to disable
 #define STATUS_TIME_DIFF_ms 500 // 2 Hz
 
-#define MAX_LOOP_TIME_DIFF_ms 20 // 50 Hz
-#define MAX_CAN_IDLE_TIME_MS 2000 
+#define MAX_LOOP_TIME_DIFF_ms 200 // 5 Hz
+#define MAX_CAN_IDLE_TIME_MS 5000 
 
 #define SAFE_STATE_ENABLED 1
 adcc_channel_t current_sense_5v = channel_ANA0; 
@@ -131,11 +132,7 @@ int main(int argc, char **argv) {
 
     // Set up actuator, set polarity
     pca_init();
-#if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
-    actuator_init(1 << FILL_DUMP_PIN); // only fill dump is inverted
-#elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
-    actuator_init(1);
-#endif
+    actuator_init();
 
     /*
       Vent and Fill Dump: 0 to open, 1 to close (invert)
@@ -221,12 +218,8 @@ int main(int argc, char **argv) {
             // 1. We haven't heard CAN traffic in a while
             // 2. We're low on battery voltage
             // "thread safe" because main loop should never write to requested_actuator_state
-#ifdef JASON
-            if (SAFE_STATE_ENABLED && (millis() - last_command_millis > MAX_CAN_IDLE_TIME_MS)) {
-#else
-            if (SAFE_STATE_ENABLED && ((millis() - last_command_millis > MAX_CAN_IDLE_TIME_MS) ||
+            if (SAFE_STATE_ENABLED && (((millis() - last_command_millis) > MAX_CAN_IDLE_TIME_MS) ||
                                        is_batt_voltage_critical())) {
-#endif
 
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
                 actuator_set(SAFE_STATE_FILL, FILL_DUMP_PIN);

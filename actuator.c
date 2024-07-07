@@ -7,10 +7,8 @@
 #include "canlib/canlib.h"
 
 uint8_t actuator_states = 0;
-uint8_t actuator_invert = 0;
 
-void actuator_init(uint8_t polarity) {
-    actuator_invert = polarity;
+void actuator_init() {
     actuator_states = pca_get_output();
 }
 
@@ -20,5 +18,5 @@ void actuator_set(enum ACTUATOR_STATE state, uint8_t pin_num) {
     } else if (state == ACTUATOR_ON) {
         actuator_states |= (1 << pin_num);
     }
-    pca_set_output(actuator_states ^ actuator_invert);
+    pca_set_output(actuator_states);
 }

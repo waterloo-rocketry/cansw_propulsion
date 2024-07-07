@@ -8,8 +8,8 @@
 // #include "board.h"
 #include "actuator.h"
 
-const float CONVERT_FACTOR = 1e+05 / 4096.0f * 3.3; // 100 V/V multiplier * mV conversion * (raw + continuity correction) / 12bit adc * vref
-
+const float CONVERT_FACTOR = 10000 * 3.3 / 4096.0f ; // 100 V/V multiplier * uV conversion * vref / 12bit adc
+const float BATT_CONVERT_FACTOR=1000/4096.0f*3.3;
 //******************************************************************************
 //                              STATUS CHECKS                                 //
 //******************************************************************************
@@ -20,8 +20,8 @@ bool check_battery_voltage_error(adcc_channel_t battery_channel) { // returns mV
     adc_result_t batt_raw = ADCC_GetSingleConversion(battery_channel);
     //adc_result_t batt_raw = 0;
 
-    // Vref: 4.096V, Resolution: 12 bits -> raw ADC value is precisely in mV
-    uint16_t batt_voltage_mV = (uint16_t)batt_raw;
+    // Vref: 3.3V, Resolution: 12 bits -> raw ADC value is precisely in mV
+    uint16_t batt_voltage_mV = (float)batt_raw * BATT_CONVERT_FACTOR;
 
     // get the un-scaled battery voltage (voltage divider)
     // we don't care too much about precision - some truncation is fine
@@ -74,8 +74,8 @@ bool check_5v_current_error(adcc_channel_t current_channel) { // Check bus curre
     
     
     adc_result_t voltage_raw = ADCC_GetSingleConversion(current_channel); 
-    float mV = (voltage_raw + 0.5f) * CONVERT_FACTOR;
-    uint16_t curr_draw_mA = mV / 62; // 62 is R8 rating in mR
+    float uV = voltage_raw * CONVERT_FACTOR;
+    uint16_t curr_draw_mA = uV / 62; // 62 is R8 rating in mR
 
 
     if (curr_draw_mA > BUS_OVERCURRENT_THRESHOLD_mA) { 
@@ -96,8 +96,8 @@ bool check_5v_current_error(adcc_channel_t current_channel) { // Check bus curre
 
 bool check_12v_current_error(adcc_channel_t current_channel) { // check battery current error
     adc_result_t voltage_raw = ADCC_GetSingleConversion(current_channel);
-    float mV = (voltage_raw + 0.5f) * CONVERT_FACTOR;
-    uint16_t curr_draw_mA = mV / 15; // 15 is R7 rating in mR
+    float uV = voltage_raw * CONVERT_FACTOR;
+    uint16_t curr_draw_mA = uV / 15; // 15 is R7 rating in mR
 
     if (curr_draw_mA > BAT_OVERCURRENT_THRESHOLD_mA) {
         uint32_t timestamp = millis();

@@ -153,8 +153,7 @@
         <property key="call-prologues" value="false"/>
         <property key="default-bitfield-type" value="true"/>
         <property key="default-char-type" value="true"/>
-        <property key="define-macros"
-                  value="BOARD_UNIQUE_ID=BOARD_ID_PROPULSION_INJ;JASON"/>
+        <property key="define-macros" value="BOARD_UNIQUE_ID=BOARD_ID_PROPULSION_INJ"/>
         <property key="disable-optimizations" value="true"/>
         <property key="extra-include-directories" value="canlib;rocketlib/include"/>
         <property key="favor-optimization-for" value="-speed,+space"/>
