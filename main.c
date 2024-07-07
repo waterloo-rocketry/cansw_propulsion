@@ -44,7 +44,7 @@ adcc_channel_t batt_vol_sense = channel_ANC2;
 // ADD more actuator ID's if propulsion wants more stuff
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
 
-#define SAFE_STATE_FILL ACTUATOR_ON
+#define SAFE_STATE_FILL ACTUATOR_OFF
 #define SAFE_STATE_INJ ACTUATOR_OFF
 
 #define FILL_DUMP_PIN 2 //FIX ME should be 1
@@ -65,7 +65,7 @@ adcc_channel_t hallsense_fuel = channel_ANB4;
 adcc_channel_t hallsense_ox = channel_ANB5;
 
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
-#define SAFE_STATE_VENT ACTUATOR_ON
+#define SAFE_STATE_VENT ACTUATOR_OFF
 #define VENT_VALVE_PIN 0 
 #define VENT_TEMP_TIME_DIFF_ms 250 // 4 Hz
 #define PRES_OX_TIME_DIFF_ms 250 // 4 Hz

@@ -9,7 +9,7 @@
 #include "actuator.h"
 
 const float CONVERT_FACTOR = 10000 * 3.3 / 4096.0f ; // 100 V/V multiplier * uV conversion * vref / 12bit adc
-const float BATT_CONVERT_FACTOR=1000/4096.0f*3.3;
+const float BATT_CONVERT_FACTOR=1000/4096.0f*3.3; // mV conversion * vref / 12bit adc
 //******************************************************************************
 //                              STATUS CHECKS                                 //
 //******************************************************************************
