@@ -372,6 +372,8 @@ static void can_msg_handler(const can_msg_t *msg) {
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
             if (get_actuator_id(msg) == ACTUATOR_INJECTOR_VALVE) {
                 requested_actuator_state_inj = get_req_actuator_state(msg);
+                seen_can_command = true;  
+               
             } else if (get_actuator_id(msg) == ACTUATOR_FILL_DUMP_VALVE) {
                 requested_actuator_state_fill = get_req_actuator_state(msg);
                 seen_can_command = true;
