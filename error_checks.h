@@ -15,7 +15,7 @@
 #define ACTUATOR_BATT_OVERVOLTAGE_THRESHOLD_mV 14000
 
 // From 5V bus line. At this current, a warning will be sent out over CAN
-#define BUS_OVERCURRENT_THRESHOLD_mA 50
+#define BUS_OVERCURRENT_THRESHOLD_mA 100
 #define BAT_OVERCURRENT_THRESHOLD_mA 150
 
 
