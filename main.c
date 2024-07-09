@@ -3,12 +3,22 @@
  * 
  * correct low_pass pressure function, and then reinstate it  
  * - find the original function of PRES_TIME_DIFF_ms
- * reinstate is_batt_voltage_critical() check for safestate injection
  * test the code for the fill hall sensor
- * test the 12V current sense function
- * - Measure the correct BAT_OVERCURRENT_mA value, and change it in error_checks.h --> 60mA??
- * double check curr_draw_mA in error_checks.c is correct
+ * test if pnumatics_pt works 
  * USBdbg problem where actuators are locked in safe state after can lines recover from short 
+ * Add functionality for other LEDs
+ * - Have a LED turn on when it is in safe state
+ * - Maybe use a different heartbeat leds depending on if it is inj_board or vent_board 
+ * Add ACTUATOR_STATE can messages 
+ * - " There's a dedicated message type called actuator status which includes the commanded and measured state of each actuator. 
+ * - The measured state will be determined by the hall sensor, and the commanded state is what it should be. 
+ * - You can look at the old actuator board code for reference" -- Jack
+ * 
+ * Some other misc things about the board
+ * - double check which LEDs colours correspond to what GPIO
+ * - find the right fuse 
+ * - board routing issues due to via-in-pad and daisy chaining
+ * 
  */
 
 
@@ -140,7 +150,7 @@ int main(int argc, char **argv) {
 
     uint32_t last_message_millis = 0; // last time we saw a can message 
     // loop timers
-    uint32_t last_status_millis = millis();
+    uint32_t last_status_millis = millis(); // unused?
     uint32_t last_pres_low_millis = millis();
 
     uint32_t last_millis = millis();
@@ -158,7 +168,6 @@ int main(int argc, char **argv) {
     uint32_t last_vent_temp_millis = millis();
 #endif
 
-    bool blue_led_on = false; // visual heartbeat
     while (1) {
         CLRWDT(); // feed the watchdog, which is set for 256ms
 
@@ -206,6 +215,7 @@ int main(int argc, char **argv) {
             // "thread safe" because main loop should never write to requested_actuator_state
             if (SAFE_STATE_ENABLED && (((millis() - last_command_millis) > MAX_CAN_IDLE_TIME_MS) ||
                                        is_batt_voltage_critical())) {
+                LED_ON_R();
 
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
                 actuator_set(SAFE_STATE_FILL, FILL_DUMP_PIN);
@@ -213,8 +223,9 @@ int main(int argc, char **argv) {
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
                 actuator_set(SAFE_STATE_VENT, VENT_VALVE_PIN);
 #endif
-
+                           
             } else {
+                LED_OFF_R();
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
                 actuator_set(requested_actuator_state_inj, INJECTOR_PIN);
                 actuator_set(requested_actuator_state_fill, FILL_DUMP_PIN);
@@ -222,6 +233,10 @@ int main(int argc, char **argv) {
                 actuator_set(requested_actuator_state_vent, VENT_VALVE_PIN);
 #endif
             }
+            
+            
+            
+/* // FIXME why is this code here when we can use the already declared LED_Heartbeat_B
 
             // visual heartbeat indicator
             if (blue_led_on) {
@@ -231,12 +246,16 @@ int main(int argc, char **argv) {
                 // BLUE_LED_ON();
                 blue_led_on = true;
             }
+ */
+            
+            // Visual heartbeat indicator 
+            LED_heartbeat_B();
 
             // update our loop counter
             last_millis = millis();
         }
 
-/*
+/* // FIXME delete this? 
 #if PRES_TIME_DIFF_ms
         if (millis() - last_pres_low_millis > PRES_TIME_DIFF_ms) {
             last_pres_low_millis = millis();
