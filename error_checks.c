@@ -8,8 +8,8 @@
 // #include "board.h"
 #include "actuator.h"
 
-const float CONVERT_FACTOR = 10000 * 3.3 / 4096.0f ; // 100 V/V multiplier * uV conversion * vref / 12bit adc
-const float BATT_CONVERT_FACTOR=1000/4096.0f*3.3; // mV conversion * vref / 12bit adc
+const float mA_SENSE_CONVERT_FACTOR = 10000 * 3.3 / 4096.0f ; //  uV conversion / 100 V/V multiplier * vref / 12bit adc
+const float BATT_CONVERT_FACTOR= 1000 * 3.3 / 4096.0f ; // mV conversion * vref / 12bit adc
 //******************************************************************************
 //                              STATUS CHECKS                                 //
 //******************************************************************************
@@ -74,7 +74,7 @@ bool check_5v_current_error(adcc_channel_t current_channel) { // Check bus curre
     
     
     adc_result_t voltage_raw = ADCC_GetSingleConversion(current_channel); 
-    float uV = voltage_raw * CONVERT_FACTOR;
+    float uV = voltage_raw * mA_SENSE_CONVERT_FACTOR;
     uint16_t curr_draw_mA = uV / 62; // 62 is R8 rating in mR
 
 
@@ -96,7 +96,7 @@ bool check_5v_current_error(adcc_channel_t current_channel) { // Check bus curre
 
 bool check_12v_current_error(adcc_channel_t current_channel) { // check battery current error
     adc_result_t voltage_raw = ADCC_GetSingleConversion(current_channel);
-    float uV = voltage_raw * CONVERT_FACTOR;
+    float uV = voltage_raw * mA_SENSE_CONVERT_FACTOR;
     uint16_t curr_draw_mA = uV / 15; // 15 is R7 rating in mR
 
     if (curr_draw_mA > BAT_OVERCURRENT_THRESHOLD_mA) {

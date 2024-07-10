@@ -5,6 +5,7 @@
 #include "IOExpanderDriver.h"
 #include "actuator.h"
 #include "canlib/canlib.h"
+#include "sensor_general.h"
 
 uint8_t actuator_states = 0;
 
@@ -19,13 +20,31 @@ void actuator_set(enum ACTUATOR_STATE state, uint8_t pin_num) {
         actuator_states |= (1 << pin_num);
     }
     pca_set_output(actuator_states);
-    
-    // add "enum ACTUATOR_ID id" as parameter 
-    // build_actuator_stat_msg(millis(), id, state, enum ACTUATOR_STATE req_actuator_state, can_msg_t *output);
 }
 
+void set_actuator_LED(enum ACTUATOR_STATE state, enum ACTUATOR_ID actuator) {
+    if (actuator == ACTUATOR_INJECTOR_VALVE) {
+        (state == ACTUATOR_ON) ? LED_ON_R() : LED_OFF_R(); 
+    }
+    else { // Vent/Fill
+        (state == ACTUATOR_ON) ? LED_ON_B() : LED_OFF_B(); 
+    }
+}
 
-enum ACTUATOR_STATE get_actuator_state(void) {
+// TODO update this
+enum ACTUATOR_STATE get_actuator_state(uint8_t pin_num) {
+    
+    // temp code
+    uint8_t state = (actuator_states >> pin_num) & 0x01;
+    
+    if (state == 1)
+        return ACTUATOR_ON;
+    
+    return ACTUATOR_OFF;
+    
+    
+    
+    /**
 #if !HAS_LIMS
     return ACTUATOR_UNK;
 #else
@@ -49,22 +68,5 @@ enum ACTUATOR_STATE get_actuator_state(void) {
     return ACTUATOR_ILLEGAL; // both limit switches at same time
 #endif
 #endif
-}
-
-
-void actuator_send_status(enum ACTUATOR_STATE req_state) {
-// define in board.h
-#ifdef INJECTOR
-    adc_result_t hall_raw = ADCC_GetSingleConversion(channel_HALL);
-    
-    // Send a CAN message with the raw hall value
-    can_msg_t hall_msg;
-    build_analog_data_msg(millis(), SENSOR_MAG_1, hall_raw, &hall_msg);
-    txb_enqueue(&hall_msg);
-#endif
-    enum ACTUATOR_STATE curr_state = get_actuator_state();
-
-    can_msg_t stat_msg;
-    build_actuator_stat_msg(millis(), ACTUATOR_ID, curr_state, req_state, &stat_msg);
-    txb_enqueue(&stat_msg);
+     */
 }

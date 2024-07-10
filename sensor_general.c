@@ -11,7 +11,7 @@
 const float VREF = 3.3;
 
 void LED_init(void) {
-    TRISA4 = 0; // set B4, B3, B2 as output
+    TRISA4 = 0; // set A4, A3, A2 as output
     TRISA3 = 0;
     TRISA2 = 0;
     LATA4 = 1; // turn the leds off
@@ -19,7 +19,7 @@ void LED_init(void) {
     LATA2 = 1;
 }
 
-// Green LED
+// D1 Green LED
 void LED_heartbeat_G(void) {
     static bool led_on = false;
     if (led_on) {
@@ -31,7 +31,7 @@ void LED_heartbeat_G(void) {
     }
 }
 
-// Blue LED
+// D2 Blue LED
 void LED_heartbeat_B(void) {
     static bool led_on = false;
     if (led_on) {
@@ -43,7 +43,7 @@ void LED_heartbeat_B(void) {
     }
 }
 
-// Red LED
+// D3 Red LED
 void LED_heartbeat_R(void) {
     static bool led_on = false;
     if (led_on) {

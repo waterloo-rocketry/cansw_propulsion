@@ -4,20 +4,20 @@
  * correct low_pass pressure function, and then reinstate it  
  * - find the original function of PRES_TIME_DIFF_ms
  * test the code for the fill hall sensor
- * test if pnumatics_pt works 
  * USBdbg problem where actuators are locked in safe state after can lines recover from short 
- * Add functionality for other LEDs
- * - Have a LED turn on when it is in safe state
- * - Maybe use a different heartbeat leds depending on if it is inj_board or vent_board 
  * Add ACTUATOR_STATE can messages 
  * - " There's a dedicated message type called actuator status which includes the commanded and measured state of each actuator. 
  * - The measured state will be determined by the hall sensor, and the commanded state is what it should be. 
  * - You can look at the old actuator board code for reference" -- Jack
+ * - Double check if I did it correctly lol!!!
  * 
- * Some other misc things about the board
- * - double check which LEDs colours correspond to what GPIO
- * - find the right fuse 
- * - board routing issues due to via-in-pad and daisy chaining
+ * 
+ * 
+ * Harnessing 
+ * - Test pnumatics_pt, vent thermistor, and hall sensors show correct balues 
+ * - safe state, undervoltage, and can shorting tests with these sensors 
+ * - NOTE: D2 and D3 on vent board might be dead :joe-my-god:
+ * - NOTE: Vent board is only showing about 300mV in +12V line for some reason :(((
  * 
  */
 
@@ -143,7 +143,7 @@ int main(int argc, char **argv) {
     pca_init();
     actuator_init();
 
-    /*
+    /* // FIXME delete this? 
       Vent and Fill Dump: 0 to open, 1 to close (invert)
       Injector: 0 to close, 1 to open
     */
@@ -208,48 +208,60 @@ int main(int argc, char **argv) {
             if (status_ok) {
                 send_status_ok();
             }
-            LED_heartbeat_G();
+            
             // Set safe state if:
             // 1. We haven't heard CAN traffic in a while
             // 2. We're low on battery voltage
             // "thread safe" because main loop should never write to requested_actuator_state
             if (SAFE_STATE_ENABLED && (((millis() - last_command_millis) > MAX_CAN_IDLE_TIME_MS) ||
                                        is_batt_voltage_critical())) {
-                LED_ON_R();
+                
+                // Red LED flashes during safe state.
+                LED_heartbeat_R();
+                LED_OFF_B();
 
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
                 actuator_set(SAFE_STATE_FILL, FILL_DUMP_PIN);
+                
                 // Injector does not have electrical safe state, just keep state
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
                 actuator_set(SAFE_STATE_VENT, VENT_VALVE_PIN);
 #endif
                            
             } else {
-                LED_OFF_R();
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
                 actuator_set(requested_actuator_state_inj, INJECTOR_PIN);
+                set_actuator_LED(requested_actuator_state_inj, ACTUATOR_INJECTOR_VALVE);
+                
                 actuator_set(requested_actuator_state_fill, FILL_DUMP_PIN);
+                set_actuator_LED(requested_actuator_state_fill, ACTUATOR_FILL_DUMP_VALVE);
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
                 actuator_set(requested_actuator_state_vent, VENT_VALVE_PIN);
+                set_actuator_LED(requested_actuator_state_vent, ACTUATOR_VENT_VALVE);
 #endif
-            }
+            } 
             
+            // send ACTUATOR_STATUS can messages
+            // FIXME: Should we send a different req_state if it is in safe mode? 
+#if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
+            can_msg_t stat_msg1;
+            build_actuator_stat_msg(millis(), ACTUATOR_INJECTOR_VALVE, get_actuator_state(INJECTOR_PIN), requested_actuator_state_inj, &stat_msg1);
+            txb_enqueue(&stat_msg1);
             
+            can_msg_t stat_msg2;
+            build_actuator_stat_msg(millis(), ACTUATOR_FILL_DUMP_VALVE, get_actuator_state(FILL_DUMP_PIN), requested_actuator_state_fill, &stat_msg2);
+            txb_enqueue(&stat_msg2);
+#elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
+            can_msg_t stat_msg;
+            build_actuator_stat_msg(millis(), ACTUATOR_VENT_VALVE, get_actuator_state(VENT_VALVE_PIN), requested_actuator_state_vent, &stat_msg);
+            txb_enqueue(&stat_msg);
+#endif
             
-/* // FIXME why is this code here when we can use the already declared LED_Heartbeat_B
-
-            // visual heartbeat indicator
-            if (blue_led_on) {
-                // BLUE_LED_OFF();
-                blue_led_on = false;
-            } else {
-                // BLUE_LED_ON();
-                blue_led_on = true;
-            }
- */
-            
+      
             // Visual heartbeat indicator 
-            LED_heartbeat_B();
+            LED_heartbeat_G();
+
+
 
             // update our loop counter
             last_millis = millis();
@@ -272,7 +284,7 @@ int main(int argc, char **argv) {
 
             can_msg_t sensor_msg;
             build_analog_data_msg(
-                millis(), SENSOR_PRESSURE_PNEUMATICS, pressure_pneumatics_psi, &sensor_msg);
+            millis(), SENSOR_PRESSURE_PNEUMATICS, pressure_pneumatics_psi, &sensor_msg);
             txb_enqueue(&sensor_msg);
         }
 #endif
@@ -392,7 +404,6 @@ static void can_msg_handler(const can_msg_t *msg) {
             if (get_actuator_id(msg) == ACTUATOR_INJECTOR_VALVE) {
                 requested_actuator_state_inj = get_req_actuator_state(msg);
                 seen_can_command = true;  
-               
             } else if (get_actuator_id(msg) == ACTUATOR_FILL_DUMP_VALVE) {
                 requested_actuator_state_fill = get_req_actuator_state(msg);
                 seen_can_command = true;

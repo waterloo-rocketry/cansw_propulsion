@@ -4,7 +4,7 @@
 #define PRES_TIME_DIFF_ms 250
 
 #include <stdint.h>
-
+#include "mcc_generated_files/adc/adcc.h"
 // Contains miscellaneous sensor board-specific code
 
 #define LED_ON_G() (LATA2 = 0)
