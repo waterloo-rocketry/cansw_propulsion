@@ -238,11 +238,12 @@ int main(int argc, char **argv) {
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
                 actuator_set(requested_actuator_state_vent, VENT_VALVE_PIN);
                 set_actuator_LED(requested_actuator_state_vent, ACTUATOR_VENT_VALVE);
+                LED_OFF_R();
 #endif
             } 
             
             // send ACTUATOR_STATUS can messages
-            // FIXME: Should we send a different req_state if it is in safe mode? 
+            // FIXME: Should we send a different req_state if it is in safe mode? maybe ACTUATOR_UNK
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
             can_msg_t stat_msg1;
             build_actuator_stat_msg(millis(), ACTUATOR_INJECTOR_VALVE, get_actuator_state(INJECTOR_PIN), requested_actuator_state_inj, &stat_msg1);
