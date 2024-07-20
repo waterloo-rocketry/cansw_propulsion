@@ -87,19 +87,21 @@ uint32_t get_pressure_pneumatic_psi(adcc_channel_t adc_channel) {
 }
 
 // Low-pass filter for 4-20mA pressure transducer
-#define SAMPLE_FREQ (1000.0 / PRES_TIME_DIFF_ms) // FIXME PRES_TIME_DIFF_ms is not set 
+#define SAMPLE_FREQ (1000.0 / PRES_TIME_DIFF_ms) 
 #define LOW_PASS_ALPHA(TR) ((SAMPLE_FREQ * TR / 5.0) / (1 + SAMPLE_FREQ * TR / 5.0))
 #define LOW_PASS_RESPONSE_TIME 10.0 // seconds
 double alpha_low = LOW_PASS_ALPHA(LOW_PASS_RESPONSE_TIME);
-double low_pass_pressure_psi = 0;
 
-uint16_t update_pressure_psi_low_pass(adcc_channel_t adc_channel) {
+
+uint16_t update_pressure_psi_low_pass(adcc_channel_t adc_channel, double low_pass_pressure_psi) {
 
     int16_t pressure_psi = get_pressure_4_20_psi(adc_channel);
 
     low_pass_pressure_psi = alpha_low * low_pass_pressure_psi + (1.0 - alpha_low) * pressure_psi;
+    
     return (uint16_t)low_pass_pressure_psi;
 }
+
 
 // 10kR thermistor
 uint16_t get_temperature_c(adcc_channel_t adc_channel) {

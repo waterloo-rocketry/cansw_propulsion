@@ -1,26 +1,3 @@
-/*
- TODO:
- * 
- * correct low_pass pressure function, and then reinstate it  
- * - find the original function of PRES_TIME_DIFF_ms
- * test the code for the fill hall sensor
- * USBdbg problem where actuators are locked in safe state after can lines recover from short 
- * Add ACTUATOR_STATE can messages 
- * - " There's a dedicated message type called actuator status which includes the commanded and measured state of each actuator. 
- * - The measured state will be determined by the hall sensor, and the commanded state is what it should be. 
- * - You can look at the old actuator board code for reference" -- Jack
- * - Double check if I did it correctly lol!!!
- * 
- * 
- * 
- * Harnessing 
- * - Test pnumatics_pt, vent thermistor, and hall sensors show correct balues 
- * - safe state, undervoltage, and can shorting tests with these sensors 
- * - NOTE: D2 and D3 on vent board might be dead :joe-my-god:
- * - NOTE: Vent board is only showing about 300mV in +12V line for some reason :(((
- * 
- */
-
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -62,7 +39,7 @@ adcc_channel_t batt_vol_sense = channel_ANC2;
 #define PRES_PNEUMATICS_TIME_DIFF_ms 250 // 4 Hz
 #define PRES_FUEL_TIME_DIFF_ms 250 // 4 Hz
 #define PRES_CC_TIME_DIFF_ms 250 // 4 Hz
-#define HALLSENSE_FILL_TIME_DIFF_ms 250 // 4 Hz
+// #define HALLSENSE_FILL_TIME_DIFF_ms 250 // 4 Hz descoped for borealis 
 #define HALLSENSE_FUEL_TIME_DIFF_ms 250 // 4 Hz
 #define HALLSENSE_OX_TIME_DIFF_ms 250 // 4 Hz
 
@@ -73,6 +50,9 @@ adcc_channel_t pres_cc = channel_ANB0;
 adcc_channel_t hallsense_fuel = channel_ANB4;
 adcc_channel_t hallsense_ox = channel_ANB5;
 
+double fuel_pres_low_pass = 0;
+double cc_pres_low_pass = 0;
+
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
 #define SAFE_STATE_VENT ACTUATOR_OFF
 #define VENT_VALVE_PIN 0 
@@ -80,7 +60,9 @@ adcc_channel_t hallsense_ox = channel_ANB5;
 #define PRES_OX_TIME_DIFF_ms 250 // 4 Hz
 
 adcc_channel_t pres_ox = channel_ANB0;
-adcc_channel_t temp_vent = channel_ANB2;
+adcc_channel_t temp_vent = channel_ANB1;
+
+double ox_pres_low_pass = 0;
 
 #else
 #error "INVALID_BOARD_UNIQUE_ID"
@@ -139,14 +121,9 @@ int main(int argc, char **argv) {
 
     i2c_init(0);
 
-    // Set up actuator, set polarity
+    // Set up actuator
     // pca_init(); FIXME find way to init pca without having staes default to high 
     actuator_init();
-
-    /* // FIXME delete this? 
-      Vent and Fill Dump: 0 to open, 1 to close (invert)
-      Injector: 0 to close, 1 to open
-    */
 
     uint32_t last_message_millis = 0; // last time we saw a can message 
     // loop timers
@@ -268,15 +245,7 @@ int main(int argc, char **argv) {
             last_millis = millis();
         }
 
-/* // FIXME delete this? 
-#if PRES_TIME_DIFF_ms
-        if (millis() - last_pres_low_millis > PRES_TIME_DIFF_ms) {
-            last_pres_low_millis = millis();
-            update_pressure_psi_(channel_ANA0); //FIX ME (is this channel set?)
-        }
-#endif
-*/
-
+        
 #if PRES_PNEUMATICS_TIME_DIFF_ms
         if (millis() - last_pres_pneumatics_millis > PRES_PNEUMATICS_TIME_DIFF_ms) {
             last_pres_pneumatics_millis = millis();
@@ -293,9 +262,7 @@ int main(int argc, char **argv) {
 #if PRES_FUEL_TIME_DIFF_ms
         if (millis() - last_pres_fuel_millis > PRES_FUEL_TIME_DIFF_ms) {
             last_pres_fuel_millis = millis();
-            // FIXME: both fuelPT and CCPT call the same low pass function, which may lead to them reading the same value
-            // uint16_t pressure_fuel_psi = update_pressure_psi_low_pass(pres_fuel); 
-            uint16_t pressure_fuel_psi = get_pressure_4_20_psi(pres_fuel);
+            uint16_t pressure_fuel_psi = update_pressure_psi_low_pass(pres_fuel, &fuel_pres_low_pass); 
             can_msg_t sensor_msg;
             build_analog_data_msg(millis(), SENSOR_PRESSURE_FUEL, pressure_fuel_psi, &sensor_msg);
             txb_enqueue(&sensor_msg);
@@ -305,8 +272,7 @@ int main(int argc, char **argv) {
 #if PRES_CC_TIME_DIFF_ms
         if (millis() - last_pres_cc_millis > PRES_CC_TIME_DIFF_ms) {
             last_pres_cc_millis = millis();
-            // uint16_t pressure_cc_psi = update_pressure_psi_low_pass(pres_cc);
-            uint16_t pressure_cc_psi = get_pressure_4_20_psi(pres_cc);
+            uint16_t pressure_cc_psi = update_pressure_psi_low_pass(pres_cc, &cc_pres_low_pass);
             can_msg_t sensor_msg;
             build_analog_data_msg(millis(), SENSOR_PRESSURE_CC, pressure_cc_psi, &sensor_msg);
             txb_enqueue(&sensor_msg);
@@ -358,7 +324,7 @@ int main(int argc, char **argv) {
 #if PRES_OX_TIME_DIFF_ms
         if (millis() - last_pres_ox_millis > PRES_OX_TIME_DIFF_ms) {
             last_pres_ox_millis = millis();
-            uint16_t pressure_ox_psi = update_pressure_psi_low_pass(pres_ox);
+            uint16_t pressure_ox_psi = update_pressure_psi_low_pass(pres_ox, &ox_pres_low_pass);
             can_msg_t sensor_msg;
             build_analog_data_msg(millis(), SENSOR_PRESSURE_OX, pressure_ox_psi, &sensor_msg);
             txb_enqueue(&sensor_msg);
