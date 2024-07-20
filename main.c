@@ -140,7 +140,7 @@ int main(int argc, char **argv) {
     i2c_init(0);
 
     // Set up actuator, set polarity
-    pca_init();
+    // pca_init(); FIXME find way to init pca without having staes default to high 
     actuator_init();
 
     /* // FIXME delete this? 
