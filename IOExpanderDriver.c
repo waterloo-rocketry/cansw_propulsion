@@ -16,11 +16,12 @@
 #define POLARITY_REG 0x02
 
 void pca_init() {
-    i2c_write_reg8(PCA_ADDRESS, CONFIGURATION, OUTPUT);
+    
 }
 
 void pca_set_output(uint8_t states) {
     i2c_write_reg8(PCA_ADDRESS, 1, states);
+    i2c_write_reg8(PCA_ADDRESS, CONFIGURATION, OUTPUT); 
 }
 
 uint8_t pca_get_output() {
