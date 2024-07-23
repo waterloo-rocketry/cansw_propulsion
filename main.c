@@ -20,7 +20,7 @@
 // Set any of these to zero to disable
 #define STATUS_TIME_DIFF_ms 500 // 2 Hz
 
-#define MAX_CAN_IDLE_TIME_MS 5000 
+#define MAX_CAN_IDLE_TIME_MS 20000 
 
 #define SAFE_STATE_ENABLED 1
 adcc_channel_t current_sense_5v = channel_ANA0; 
