@@ -39,12 +39,10 @@ adcc_channel_t batt_vol_sense = channel_ANC2;
 #define PRES_PNEUMATICS_TIME_DIFF_ms 250 // 4 Hz
 #define PRES_FUEL_TIME_DIFF_ms 250 // 4 Hz
 #define PRES_CC_TIME_DIFF_ms 250 // 4 Hz
-// #define HALLSENSE_FILL_TIME_DIFF_ms 250 // 4 Hz descoped for borealis 
 #define HALLSENSE_FUEL_TIME_DIFF_ms 250 // 4 Hz
 #define HALLSENSE_OX_TIME_DIFF_ms 250 // 4 Hz
 
 adcc_channel_t pres_fuel = channel_ANB1;
-adcc_channel_t hallsense_fill = channel_ANB3;
 adcc_channel_t pres_pneumatics = channel_ANB2;
 adcc_channel_t pres_cc = channel_ANB0;
 adcc_channel_t hallsense_fuel = channel_ANB4;
@@ -52,6 +50,9 @@ adcc_channel_t hallsense_ox = channel_ANB5;
 
 double fuel_pres_low_pass = 0;
 double cc_pres_low_pass = 0;
+
+#define HALLSENSE_FUEL_THRESHOLD 1400
+#define HALLSENSE_OX_THRESHOLD 1400
 
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
 #define SAFE_STATE_VENT ACTUATOR_OFF
@@ -219,27 +220,19 @@ int main(int argc, char **argv) {
 #endif
             } 
             
-            // send ACTUATOR_STATUS can messages
-            // FIXME: Should we send a different req_state if it is in safe mode? maybe ACTUATOR_UNK
+            // send ACTUATOR_STATUS can messages for non-hall sense valves
 #if (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_INJ)
-            can_msg_t stat_msg1;
-            build_actuator_stat_msg(millis(), ACTUATOR_INJECTOR_VALVE, get_actuator_state(INJECTOR_PIN), requested_actuator_state_inj, &stat_msg1);
-            txb_enqueue(&stat_msg1);
-            
             can_msg_t stat_msg2;
-            build_actuator_stat_msg(millis(), ACTUATOR_FILL_DUMP_VALVE, get_actuator_state(FILL_DUMP_PIN), requested_actuator_state_fill, &stat_msg2);
+            build_actuator_stat_msg(millis(), ACTUATOR_FILL_DUMP_VALVE, ACTUATOR_UNK, requested_actuator_state_fill, &stat_msg2);
             txb_enqueue(&stat_msg2);
-#elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
+ #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
             can_msg_t stat_msg;
-            build_actuator_stat_msg(millis(), ACTUATOR_VENT_VALVE, get_actuator_state(VENT_VALVE_PIN), requested_actuator_state_vent, &stat_msg);
+            build_actuator_stat_msg(millis(), ACTUATOR_VENT_VALVE, ACTUATOR_UNK, requested_actuator_state_vent, &stat_msg);
             txb_enqueue(&stat_msg);
 #endif
-            
-      
+
             // Visual heartbeat indicator 
             LED_heartbeat_G();
-
-
 
             // update our loop counter
             last_millis = millis();
@@ -262,7 +255,7 @@ int main(int argc, char **argv) {
 #if PRES_FUEL_TIME_DIFF_ms
         if (millis() - last_pres_fuel_millis > PRES_FUEL_TIME_DIFF_ms) {
             last_pres_fuel_millis = millis();
-            uint16_t pressure_fuel_psi = update_pressure_psi_low_pass(pres_fuel, &fuel_pres_low_pass); 
+            uint16_t pressure_fuel_psi = update_pressure_psi_low_pass(pres_fuel, fuel_pres_low_pass); 
             can_msg_t sensor_msg;
             build_analog_data_msg(millis(), SENSOR_PRESSURE_FUEL, pressure_fuel_psi, &sensor_msg);
             txb_enqueue(&sensor_msg);
@@ -272,21 +265,11 @@ int main(int argc, char **argv) {
 #if PRES_CC_TIME_DIFF_ms
         if (millis() - last_pres_cc_millis > PRES_CC_TIME_DIFF_ms) {
             last_pres_cc_millis = millis();
-            uint16_t pressure_cc_psi = update_pressure_psi_low_pass(pres_cc, &cc_pres_low_pass);
+            uint16_t pressure_cc_psi = update_pressure_psi_low_pass(pres_cc, cc_pres_low_pass);
             can_msg_t sensor_msg;
             build_analog_data_msg(millis(), SENSOR_PRESSURE_CC, pressure_cc_psi, &sensor_msg);
             txb_enqueue(&sensor_msg);
         }
-#endif
-            
-#if HALLSENSE_FILL_TIME_DIFF_ms 
-            if (millis() - last_hallsense_fill_millis > HALLSENSE_FILL_TIME_DIFF_ms) {
-                last_hallsense_fill_millis = millis();
-                uint16_t hallsense_fill_flux = get_hall_sensor_reading(hallsense_fill);
-                can_msg_t sensor_msg;
-                build_analog_data_msg(millis(), SENSOR_HALL_FILL, hallsense_fill_flux, &sensor_msg);
-                txb_enqueue(&sensor_msg);
-            }
 #endif
 
 #if HALLSENSE_FUEL_TIME_DIFF_ms
@@ -296,6 +279,10 @@ int main(int argc, char **argv) {
             can_msg_t sensor_msg;
             build_analog_data_msg(millis(), SENSOR_HALL_FUEL_INJ, hallsense_fuel_flux, &sensor_msg);
             txb_enqueue(&sensor_msg);
+            
+            can_msg_t stat_msg3;
+            build_actuator_stat_msg(millis(), ACTUATOR_FUEL_INJECTOR, ((hallsense_fuel_flux > HALLSENSE_FUEL_THRESHOLD) ? ACTUATOR_ON : ACTUATOR_OFF), requested_actuator_state_inj, &stat_msg3);
+            txb_enqueue(&stat_msg3);
         }
 #endif
 
@@ -306,6 +293,10 @@ int main(int argc, char **argv) {
             can_msg_t sensor_msg;
             build_analog_data_msg(millis(), SENSOR_HALL_OX_INJ, hallsense_ox_flux, &sensor_msg);
             txb_enqueue(&sensor_msg);
+            
+            can_msg_t stat_msg1;
+            build_actuator_stat_msg(millis(), ACTUATOR_OX_INJECTOR, ((hallsense_ox_flux > HALLSENSE_OX_THRESHOLD) ? ACTUATOR_ON : ACTUATOR_OFF), requested_actuator_state_inj, &stat_msg1);
+            txb_enqueue(&stat_msg1);
         }
 #endif
 
