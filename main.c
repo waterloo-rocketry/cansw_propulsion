@@ -315,7 +315,7 @@ int main(int argc, char **argv) {
 #if PRES_OX_TIME_DIFF_ms
         if (millis() - last_pres_ox_millis > PRES_OX_TIME_DIFF_ms) {
             last_pres_ox_millis = millis();
-            uint16_t pressure_ox_psi = update_pressure_psi_low_pass(pres_ox, &ox_pres_low_pass);
+            uint16_t pressure_ox_psi = update_pressure_psi_low_pass(pres_ox, ox_pres_low_pass);
             can_msg_t sensor_msg;
             build_analog_data_msg(millis(), SENSOR_PRESSURE_OX, pressure_ox_psi, &sensor_msg);
             txb_enqueue(&sensor_msg);
