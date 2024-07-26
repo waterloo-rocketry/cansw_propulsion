@@ -8,8 +8,9 @@
 // #include "board.h"
 #include "actuator.h"
 
-const float mA_SENSE_CONVERT_FACTOR = 10000 * 3.3 / 4096.0f ; //  uV conversion / 100 V/V multiplier * vref / 12bit adc
-const float BATT_CONVERT_FACTOR= 1000 * 3.3 / 4096.0f ; // mV conversion * vref / 12bit adc
+const float mA_SENSE_CONVERT_FACTOR =
+    10000 * 3.3 / 4096.0f; //  uV conversion / 100 V/V multiplier * vref / 12bit adc
+const float BATT_CONVERT_FACTOR = 1000 * 3.3 / 4096.0f; // mV conversion * vref / 12bit adc
 //******************************************************************************
 //                              STATUS CHECKS                                 //
 //******************************************************************************
@@ -18,7 +19,7 @@ static bool battery_voltage_critical = false;
 
 bool check_battery_voltage_error(adcc_channel_t battery_channel) { // returns mV
     adc_result_t batt_raw = ADCC_GetSingleConversion(battery_channel);
-    //adc_result_t batt_raw = 0;
+    // adc_result_t batt_raw = 0;
 
     // Vref: 3.3V, Resolution: 12 bits -> raw ADC value is precisely in mV
     uint16_t batt_voltage_mV = (float)batt_raw * BATT_CONVERT_FACTOR;
@@ -71,19 +72,17 @@ bool is_batt_voltage_critical(void) {
 }
 
 bool check_5v_current_error(adcc_channel_t current_channel) { // Check bus current error
-    
-    
-    adc_result_t voltage_raw = ADCC_GetSingleConversion(current_channel); 
+
+    adc_result_t voltage_raw = ADCC_GetSingleConversion(current_channel);
     float uV = voltage_raw * mA_SENSE_CONVERT_FACTOR;
     uint16_t curr_draw_mA = uV / 62; // 62 is R8 rating in mR
 
-
-    if (curr_draw_mA > BUS_OVERCURRENT_THRESHOLD_mA) { 
+    if (curr_draw_mA > BUS_OVERCURRENT_THRESHOLD_mA) {
         uint32_t timestamp = millis();
         uint8_t curr_data[2] = {0};
-        curr_data[0] = (curr_draw_mA >> 8) & 0xff; 
+        curr_data[0] = (curr_draw_mA >> 8) & 0xff;
         curr_data[1] = (curr_draw_mA >> 0) & 0xff;
-               
+
         can_msg_t error_msg;
         build_board_stat_msg(timestamp, E_5V_OVER_CURRENT, curr_data, 2, &error_msg);
         txb_enqueue(&error_msg);

@@ -17,10 +17,6 @@
 #define POLARITY_REG 0x02
 #define CONFIGURATION 0x03
 
-void pca_init() {
-    
-}
-
 //
 void pca_set_output(uint8_t states) {
     i2c_write_reg8(PCA_ADDRESS, OUTPUT, states);

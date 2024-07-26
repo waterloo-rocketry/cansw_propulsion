@@ -3,8 +3,8 @@
 
 #define PRES_TIME_DIFF_ms 62 // 16 Hz
 
-#include <stdint.h>
 #include "mcc_generated_files/adc/adcc.h"
+#include <stdint.h>
 // Contains miscellaneous sensor board-specific code
 
 #define LED_ON_G() (LATA2 = 0)
