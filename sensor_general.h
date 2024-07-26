@@ -1,7 +1,7 @@
 #ifndef SENSOR_GEN_H
 #define SENSOR_GEN_H
 
-#define PRES_TIME_DIFF_ms 250
+#define PRES_TIME_DIFF_ms 62 // 16 Hz
 
 #include <stdint.h>
 #include "mcc_generated_files/adc/adcc.h"

@@ -81,8 +81,6 @@ uint32_t get_pressure_pneumatic_psi(adcc_channel_t adc_channel) {
     //  calibrated based on the PSE540 and DAQ.
     int16_t pressure_psi = (int16_t)(((v - 1) / 4) * 165.34 + 5.2);
 
-    // int32_t pressure_psi = (int32_t) (v * 39.2f*3.0f - 39.2f);
-
     return (uint16_t)pressure_psi;
 }
 

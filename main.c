@@ -33,12 +33,12 @@ adcc_channel_t batt_vol_sense = channel_ANC2;
 #define SAFE_STATE_FILL ACTUATOR_OFF
 #define SAFE_STATE_INJ ACTUATOR_OFF
 
-#define FILL_DUMP_PIN 2 //FIX ME should be 1
+#define FILL_DUMP_PIN 2
 #define INJECTOR_PIN 0 
 
 #define PRES_PNEUMATICS_TIME_DIFF_ms 250 // 4 Hz
-#define PRES_FUEL_TIME_DIFF_ms 250 // 4 Hz
-#define PRES_CC_TIME_DIFF_ms 250 // 4 Hz
+#define PRES_FUEL_TIME_DIFF_ms 62 // 16 Hz
+#define PRES_CC_TIME_DIFF_ms 62 // 16 Hz
 #define HALLSENSE_FUEL_TIME_DIFF_ms 250 // 4 Hz
 #define HALLSENSE_OX_TIME_DIFF_ms 250 // 4 Hz
 
@@ -51,6 +51,9 @@ adcc_channel_t hallsense_ox = channel_ANB5;
 double fuel_pres_low_pass = 0;
 double cc_pres_low_pass = 0;
 
+uint8_t fuel_pres_count = 0;
+uint8_t cc_pres_count = 0;
+
 #define HALLSENSE_FUEL_THRESHOLD 1400
 #define HALLSENSE_OX_THRESHOLD 1400
 
@@ -58,12 +61,14 @@ double cc_pres_low_pass = 0;
 #define SAFE_STATE_VENT ACTUATOR_OFF
 #define VENT_VALVE_PIN 0 
 #define VENT_TEMP_TIME_DIFF_ms 250 // 4 Hz
-#define PRES_OX_TIME_DIFF_ms 250 // 4 Hz
+#define PRES_OX_TIME_DIFF_ms 62 // 16 Hz
 
 adcc_channel_t pres_ox = channel_ANB0;
 adcc_channel_t temp_vent = channel_ANB1;
 
 double ox_pres_low_pass = 0;
+
+uint8_t ox_pres_count = 0;
 
 #else
 #error "INVALID_BOARD_UNIQUE_ID"
@@ -255,20 +260,26 @@ int main(int argc, char **argv) {
 #if PRES_FUEL_TIME_DIFF_ms
         if (millis() - last_pres_fuel_millis > PRES_FUEL_TIME_DIFF_ms) {
             last_pres_fuel_millis = millis();
-            uint16_t pressure_fuel_psi = update_pressure_psi_low_pass(pres_fuel, fuel_pres_low_pass); 
-            can_msg_t sensor_msg;
-            build_analog_data_msg(millis(), SENSOR_PRESSURE_FUEL, pressure_fuel_psi, &sensor_msg);
-            txb_enqueue(&sensor_msg);
+            fuel_pres_low_pass = update_pressure_psi_low_pass(pres_fuel, fuel_pres_low_pass);
+            if((fuel_pres_count & 0x3) == 0){
+                can_msg_t sensor_msg;
+                build_analog_data_msg(millis(), SENSOR_PRESSURE_FUEL, fuel_pres_low_pass, &sensor_msg);
+                txb_enqueue(&sensor_msg);
+            }
+            fuel_pres_count++;
         }
 #endif
 
 #if PRES_CC_TIME_DIFF_ms
         if (millis() - last_pres_cc_millis > PRES_CC_TIME_DIFF_ms) {
             last_pres_cc_millis = millis();
-            uint16_t pressure_cc_psi = update_pressure_psi_low_pass(pres_cc, cc_pres_low_pass);
-            can_msg_t sensor_msg;
-            build_analog_data_msg(millis(), SENSOR_PRESSURE_CC, pressure_cc_psi, &sensor_msg);
-            txb_enqueue(&sensor_msg);
+            cc_pres_low_pass = update_pressure_psi_low_pass(pres_cc, cc_pres_low_pass);
+            if((cc_pres_count & 0x3) == 0){
+                can_msg_t sensor_msg;
+                build_analog_data_msg(millis(), SENSOR_PRESSURE_CC, cc_pres_low_pass, &sensor_msg);
+                txb_enqueue(&sensor_msg);
+            }
+            cc_pres_count++;
         }
 #endif
 
@@ -315,10 +326,13 @@ int main(int argc, char **argv) {
 #if PRES_OX_TIME_DIFF_ms
         if (millis() - last_pres_ox_millis > PRES_OX_TIME_DIFF_ms) {
             last_pres_ox_millis = millis();
-            uint16_t pressure_ox_psi = update_pressure_psi_low_pass(pres_ox, ox_pres_low_pass);
-            can_msg_t sensor_msg;
-            build_analog_data_msg(millis(), SENSOR_PRESSURE_OX, pressure_ox_psi, &sensor_msg);
-            txb_enqueue(&sensor_msg);
+            ox_pres_low_pass = update_pressure_psi_low_pass(pres_ox, ox_pres_low_pass);
+            if((ox_pres_count & 0x3) == 0){
+                can_msg_t sensor_msg;
+                build_analog_data_msg(millis(), SENSOR_PRESSURE_OX, ox_pres_low_pass, &sensor_msg);
+                txb_enqueue(&sensor_msg);
+            }
+            ox_pres_count++;
         }
 #endif
         // send any queued CAN messages
