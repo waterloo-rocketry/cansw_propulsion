@@ -37,8 +37,8 @@ adcc_channel_t batt_vol_sense = channel_ANC2;
 #define INJECTOR_PIN 0
 
 #define PRES_PNEUMATICS_TIME_DIFF_ms 250 // 4 Hz
-#define PRES_FUEL_TIME_DIFF_ms 62 // 16 Hz
-#define PRES_CC_TIME_DIFF_ms 62 // 16 Hz
+#define PRES_FUEL_TIME_DIFF_ms 16 // 64 Hz
+#define PRES_CC_TIME_DIFF_ms 16 // 64 Hz
 #define HALLSENSE_FUEL_TIME_DIFF_ms 250 // 4 Hz
 #define HALLSENSE_OX_TIME_DIFF_ms 250 // 4 Hz
 
@@ -61,7 +61,7 @@ uint8_t cc_pres_count = 0;
 #define SAFE_STATE_VENT ACTUATOR_OFF
 #define VENT_VALVE_PIN 0
 #define VENT_TEMP_TIME_DIFF_ms 250 // 4 Hz
-#define PRES_OX_TIME_DIFF_ms 62 // 16 Hz
+#define PRES_OX_TIME_DIFF_ms 16 // 64 Hz
 
 adcc_channel_t pres_ox = channel_ANB0;
 adcc_channel_t temp_vent = channel_ANB1;
@@ -266,11 +266,11 @@ int main(int argc, char **argv) {
 #if PRES_FUEL_TIME_DIFF_ms
         if (millis() - last_pres_fuel_millis > PRES_FUEL_TIME_DIFF_ms) {
             last_pres_fuel_millis = millis();
-            fuel_pres_low_pass = update_pressure_psi_low_pass(pres_fuel, fuel_pres_low_pass);
-            if ((fuel_pres_count & 0x3) == 0) {
+            uint16_t fuel_pressure = update_pressure_psi_low_pass(pres_fuel, &fuel_pres_low_pass);
+            if ((fuel_pres_count & 0xf) == 0) {
                 can_msg_t sensor_msg;
                 build_analog_data_msg(
-                    millis(), SENSOR_PRESSURE_FUEL, fuel_pres_low_pass, &sensor_msg);
+                    millis(), SENSOR_PRESSURE_FUEL, fuel_pressure, &sensor_msg);
                 txb_enqueue(&sensor_msg);
             }
             fuel_pres_count++;
@@ -280,10 +280,10 @@ int main(int argc, char **argv) {
 #if PRES_CC_TIME_DIFF_ms
         if (millis() - last_pres_cc_millis > PRES_CC_TIME_DIFF_ms) {
             last_pres_cc_millis = millis();
-            cc_pres_low_pass = update_pressure_psi_low_pass(pres_cc, cc_pres_low_pass);
-            if ((cc_pres_count & 0x3) == 0) {
+            uint16_t cc_pressure = update_pressure_psi_low_pass(pres_cc, &cc_pres_low_pass);
+            if ((cc_pres_count & 0xf) == 0) {
                 can_msg_t sensor_msg;
-                build_analog_data_msg(millis(), SENSOR_PRESSURE_CC, cc_pres_low_pass, &sensor_msg);
+                build_analog_data_msg(millis(), SENSOR_PRESSURE_CC, cc_pressure, &sensor_msg);
                 txb_enqueue(&sensor_msg);
             }
             cc_pres_count++;
@@ -343,10 +343,10 @@ int main(int argc, char **argv) {
 #if PRES_OX_TIME_DIFF_ms
         if (millis() - last_pres_ox_millis > PRES_OX_TIME_DIFF_ms) {
             last_pres_ox_millis = millis();
-            ox_pres_low_pass = update_pressure_psi_low_pass(pres_ox, ox_pres_low_pass);
-            if ((ox_pres_count & 0x3) == 0) {
+            uint16_t ox_pressure = update_pressure_psi_low_pass(pres_ox, &ox_pres_low_pass);
+            if ((ox_pres_count & 0xf) == 0) {
                 can_msg_t sensor_msg;
-                build_analog_data_msg(millis(), SENSOR_PRESSURE_OX, ox_pres_low_pass, &sensor_msg);
+                build_analog_data_msg(millis(), SENSOR_PRESSURE_OX, ox_pressure, &sensor_msg);
                 txb_enqueue(&sensor_msg);
             }
             ox_pres_count++;
