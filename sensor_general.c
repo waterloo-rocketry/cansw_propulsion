@@ -11,7 +11,7 @@
 const float VREF = 3.3;
 
 void LED_init(void) {
-    TRISA4 = 0; // set B4, B3, B2 as output
+    TRISA4 = 0; // set A4, A3, A2 as output
     TRISA3 = 0;
     TRISA2 = 0;
     LATA4 = 1; // turn the leds off
@@ -19,7 +19,7 @@ void LED_init(void) {
     LATA2 = 1;
 }
 
-// Green LED
+// D1 Green LED
 void LED_heartbeat_G(void) {
     static bool led_on = false;
     if (led_on) {
@@ -31,7 +31,7 @@ void LED_heartbeat_G(void) {
     }
 }
 
-// Blue LED
+// D2 Blue LED
 void LED_heartbeat_B(void) {
     static bool led_on = false;
     if (led_on) {
@@ -43,7 +43,7 @@ void LED_heartbeat_B(void) {
     }
 }
 
-// Red LED
+// D3 Red LED
 void LED_heartbeat_R(void) {
     static bool led_on = false;
     if (led_on) {
@@ -56,13 +56,13 @@ void LED_heartbeat_R(void) {
 }
 
 // 4-20mA pressure transducer
-uint32_t get_pressure_4_20_psi(void) {
-    adc_result_t voltage_raw = ADCC_GetSingleConversion(channel_ANA0);
+uint32_t get_pressure_4_20_psi(adcc_channel_t adc_channel) {
+    adc_result_t voltage_raw = ADCC_GetSingleConversion(adc_channel);
 
     float v = (voltage_raw + 0.5f) / 4096.0f * VREF;
 
     const double r = 100;
-    const double pressure_range = 3000;
+    const double pressure_range = 1450;
 
     double current = v / r;
 
@@ -71,17 +71,15 @@ uint32_t get_pressure_4_20_psi(void) {
     return (uint32_t)pressure_psi + PT_OFFSET;
 }
 
-uint32_t get_pressure_pneumatic_psi(void) {
-    adc_result_t voltage_raw = ADCC_GetSingleConversion(channel_ANA0);
+uint32_t get_pressure_pneumatic_psi(adcc_channel_t adc_channel) {
+    adc_result_t voltage_raw = ADCC_GetSingleConversion(adc_channel);
 
-    float v = ((voltage_raw + 0.5f) / 4096.0f * VREF) * 2; // 10kohm and 10kohm resistor divider
+    float v = ((voltage_raw + 0.5f) / 4096.0f * VREF) * 2.5; // 15kohm and 10kohm resistor divider
 
     // for PSE530-R06, see "Analog Output" graph here: https://www.smcpneumatics.com/pdfs/PSE.pdf
     //  analog output[V] = ((5[V]-0.6[V])/(1[MPa] - (-0.1[MPa]))*pressure[MPa], aka y = 4x + 1
     //  calibrated based on the PSE540 and DAQ.
     int16_t pressure_psi = (int16_t)(((v - 1) / 4) * 165.34 + 5.2);
-
-    // int32_t pressure_psi = (int32_t) (v * 39.2f*3.0f - 39.2f);
 
     return (uint16_t)pressure_psi;
 }
@@ -89,21 +87,21 @@ uint32_t get_pressure_pneumatic_psi(void) {
 // Low-pass filter for 4-20mA pressure transducer
 #define SAMPLE_FREQ (1000.0 / PRES_TIME_DIFF_ms)
 #define LOW_PASS_ALPHA(TR) ((SAMPLE_FREQ * TR / 5.0) / (1 + SAMPLE_FREQ * TR / 5.0))
-#define LOW_PASS_RESPONSE_TIME 10.0 // seconds
-double alpha_low = LOW_PASS_ALPHA(LOW_PASS_RESPONSE_TIME);
-double low_pass_pressure_psi = 0;
+#define LOW_PASS_RESPONSE_TIME 2.5 // seconds
+volatile double alpha_low = LOW_PASS_ALPHA(LOW_PASS_RESPONSE_TIME);
 
-uint16_t update_pressure_psi_low_pass(void) {
+uint16_t update_pressure_psi_low_pass(adcc_channel_t adc_channel, double *low_pass_pressure_psi) {
 
-    int16_t pressure_psi = get_pressure_4_20_psi();
+    int16_t pressure_psi = get_pressure_4_20_psi(adc_channel);
 
-    low_pass_pressure_psi = alpha_low * low_pass_pressure_psi + (1.0 - alpha_low) * pressure_psi;
-    return (uint16_t)low_pass_pressure_psi;
+    *low_pass_pressure_psi = alpha_low * (*low_pass_pressure_psi) + (1.0 - alpha_low) * pressure_psi;
+
+    return (uint16_t)(*low_pass_pressure_psi);
 }
 
 // 10kR thermistor
-uint16_t get_temperature_c(void) {
-    adc_result_t voltage_raw = ADCC_GetSingleConversion(channel_ANA0);
+uint16_t get_temperature_c(adcc_channel_t adc_channel) {
+    adc_result_t voltage_raw = ADCC_GetSingleConversion(adc_channel);
     const float rdiv = 10000.0; // 10kohm divider resistor
 
     // beta, r0, t0 from
@@ -119,4 +117,8 @@ uint16_t get_temperature_c(void) {
     float invk = 1 / t0 + 1 / beta * log(r / r0);
 
     return (uint16_t)(1 / invk - 273);
+}
+
+uint16_t get_hall_sensor_reading(adcc_channel_t adc_channel) {
+    return ADCC_GetSingleConversion(adc_channel);
 }

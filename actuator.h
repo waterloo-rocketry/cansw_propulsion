@@ -1,16 +1,12 @@
 #ifndef ACTUATOR_H
-#define	ACTUATOR_H
+#define ACTUATOR_H
 
-
-#include <stdbool.h>
 #include "canlib/message_types.h"
+#include <stdbool.h>
 
 void actuator_init();
-
-void actuator_set(enum ACTUATOR_STATE state);
-
-enum ACTUATOR_STATE get_actuator_state(void);
-
-void actuator_send_status(enum ACTUATOR_STATE req_state);
+void actuator_set(enum ACTUATOR_STATE state, uint8_t pin_num);
+void set_actuator_LED(enum ACTUATOR_STATE state, enum ACTUATOR_ID actuator);
+enum ACTUATOR_STATE get_actuator_state(uint8_t pin_num);
 
 #endif /*ACTUATOR_H*/
