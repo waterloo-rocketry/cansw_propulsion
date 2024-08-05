@@ -54,8 +54,12 @@ double cc_pres_low_pass = 0;
 uint8_t fuel_pres_count = 0;
 uint8_t cc_pres_count = 0;
 
-#define HALLSENSE_FUEL_THRESHOLD 1400
-#define HALLSENSE_OX_THRESHOLD 1400
+/*
+ * Fuel INJ: Closed 3415, Open 2600
+ * Ox INJ: Closed 670, Open 2240
+ */
+#define HALLSENSE_FUEL_THRESHOLD 3000
+#define HALLSENSE_OX_THRESHOLD 1450
 
 #elif (BOARD_UNIQUE_ID == BOARD_ID_PROPULSION_VENT)
 #define SAFE_STATE_VENT ACTUATOR_OFF
@@ -302,7 +306,7 @@ int main(int argc, char **argv) {
             build_actuator_stat_msg(
                 millis(),
                 ACTUATOR_FUEL_INJECTOR,
-                ((hallsense_fuel_flux > HALLSENSE_FUEL_THRESHOLD) ? ACTUATOR_ON : ACTUATOR_OFF),
+                ((hallsense_fuel_flux < HALLSENSE_FUEL_THRESHOLD) ? ACTUATOR_ON : ACTUATOR_OFF),
                 requested_actuator_state_inj,
                 &stat_msg3);
             txb_enqueue(&stat_msg3);
